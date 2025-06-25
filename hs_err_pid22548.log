@@ -1,0 +1,242 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 266338304 bytes for G1 virtual space
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   The process is running with CompressedOops enabled, and the Java Heap may be blocking the growth of the native heap
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+#   JVM is running with Zero Based Compressed Oops mode in which the Java heap is
+#     placed in the first 32GB address space. The Java Heap base address is the
+#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress
+#     to set the Java Heap base and to place the Java Heap above 32GB virtual address.
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (os_windows.cpp:3617), pid=22548, tid=13520
+#
+# JRE version:  (17.0.8+7) (build )
+# Java VM: OpenJDK 64-Bit Server VM (17.0.8+7, mixed mode, sharing, tiered, compressed oops, compressed class ptrs, g1 gc, windows-amd64)
+# No core dump will be written. Minidumps are not enabled by default on client versions of Windows
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -javaagent:C:\Users\pc\AppData\Local\JetBrains\IdeaIC2025.1\captureAgent\debugger-agent.jar=file:///C:/Users/pc/AppData/Local/Temp/capture8449727598918592356.props -ea -DnodeNamesHandler=org.jetbrains.plugins.cucumber.java.run.CucumberTestTreeNodeManager -Didea.test.cyclic.buffer.size=1048576 -javaagent:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2023.1.2\lib\idea_rt.jar=50841 -Dkotlinx.coroutines.debug.enable.creation.stack.trace=false -Ddebugger.agent.enable.coroutines=true -Dkotlinx.coroutines.debug.enable.flows.stack.trace=true -Dkotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace=true -Dfile.encoding=UTF-8 com.intellij.rt.junit.JUnitStarter -ideVersion5 -junit4 com.api.framework.testing.runner.TestRunner
+
+Host: Intel(R) Core(TM) i5-8350U CPU @ 1.70GHz, 8 cores, 15G,  Windows 11 , 64 bit Build 26100 (10.0.26100.3912)
+Time: Wed Jun 25 06:18:19 2025 India Standard Time elapsed time: 1.120020 seconds (0d 0h 0m 1s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00000270541e00e0):  JavaThread "Unknown thread" [_thread_in_vm, id=13520, stack(0x000000a106300000,0x000000a106400000)]
+
+Stack: [0x000000a106300000,0x000000a106400000]
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [jvm.dll+0x678b0a]
+V  [jvm.dll+0x835e84]
+V  [jvm.dll+0x83762e]
+V  [jvm.dll+0x837c93]
+V  [jvm.dll+0x24746f]
+V  [jvm.dll+0x675859]
+V  [jvm.dll+0x66a0ea]
+V  [jvm.dll+0x306c7b]
+V  [jvm.dll+0x30e166]
+V  [jvm.dll+0x35dd3e]
+V  [jvm.dll+0x35df6f]
+V  [jvm.dll+0x2ddb48]
+V  [jvm.dll+0x2deab4]
+V  [jvm.dll+0x807f31]
+V  [jvm.dll+0x36bb21]
+V  [jvm.dll+0x7e733c]
+V  [jvm.dll+0x3ee4af]
+V  [jvm.dll+0x3f00c1]
+C  [jli.dll+0x528b]
+C  [ucrtbase.dll+0x37b0]
+C  [KERNEL32.DLL+0x2e8d7]
+C  [ntdll.dll+0x9c5dc]
+
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x00007ffe07cba018, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+
+Other Threads:
+  0x000002705424fb00 GCTaskThread "GC Thread#0" [stack: 0x000000a106400000,0x000000a106500000] [id=21640]
+  0x000002705425c910 ConcurrentGCThread "G1 Main Marker" [stack: 0x000000a106500000,0x000000a106600000] [id=19116]
+  0x000002705203eb70 ConcurrentGCThread "G1 Conc#0" [stack: 0x000000a106600000,0x000000a106700000] [id=32236]
+
+[error occurred during error reporting (printing all threads), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007ffe0748e587]
+
+VM state: not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x00000270541db280] Heap_lock - owner thread: 0x00000270541e00e0
+
+Heap address: 0x0000000702200000, size: 4062 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
+
+CDS archive(s) mapped at: [0x0000000000000000-0x0000000000000000-0x0000000000000000), size 0, SharedBaseAddress: 0x0000000800000000, ArchiveRelocationMode: 1.
+Narrow klass base: 0x0000000000000000, Narrow klass shift: 0, Narrow klass range: 0x0
+
+GC Precious Log:
+<Empty>
+
+Heap:
+ garbage-first heap   total 0K, used 0K [0x0000000702200000, 0x0000000800000000)
+  region size 2048K, 0 young (0K), 0 survivors (0K)
+
+[error occurred during error reporting (printing heap information), id 0xc0000005, EXCEPTION_ACCESS_VIOLATION (0xc0000005) at pc=0x00007ffe07872699]
+
+GC Heap History (0 events):
+No events
+
+Dll operation events (2 events):
+Event: 0.074 Loaded shared library C:\Users\pc\.jdks\temurin-17.0.8\bin\java.dll
+Event: 0.076 Loaded shared library C:\Users\pc\.jdks\temurin-17.0.8\bin\zip.dll
+
+Deoptimization events (0 events):
+No events
+
+Classes unloaded (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+VM Operations (0 events):
+No events
+
+Events (0 events):
+No events
+
+
+Dynamic libraries:
+0x00007ff7da600000 - 0x00007ff7da60e000 	C:\Users\pc\.jdks\temurin-17.0.8\bin\java.exe
+0x00007ffe771a0000 - 0x00007ffe77406000 	C:\WINDOWS\SYSTEM32\ntdll.dll
+0x00007ffe75ca0000 - 0x00007ffe75d69000 	C:\WINDOWS\System32\KERNEL32.DLL
+0x00007ffe746b0000 - 0x00007ffe74a7c000 	C:\WINDOWS\System32\KERNELBASE.dll
+0x00007ffe74a80000 - 0x00007ffe74bcb000 	C:\WINDOWS\System32\ucrtbase.dll
+0x00007ffe5f630000 - 0x00007ffe5f649000 	C:\Users\pc\.jdks\temurin-17.0.8\bin\VCRUNTIME140.dll
+0x00007ffe603a0000 - 0x00007ffe603b7000 	C:\Users\pc\.jdks\temurin-17.0.8\bin\jli.dll
+0x00007ffe76620000 - 0x00007ffe767ea000 	C:\WINDOWS\System32\USER32.dll
+0x00007ffe743e0000 - 0x00007ffe74407000 	C:\WINDOWS\System32\win32u.dll
+0x00007ffe757f0000 - 0x00007ffe7581b000 	C:\WINDOWS\System32\GDI32.dll
+0x00007ffe74570000 - 0x00007ffe746a2000 	C:\WINDOWS\System32\gdi32full.dll
+0x00007ffe5fc10000 - 0x00007ffe5feaa000 	C:\WINDOWS\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.3912_none_3e07963ce335137e\COMCTL32.dll
+0x00007ffe752f0000 - 0x00007ffe75399000 	C:\WINDOWS\System32\msvcrt.dll
+0x00007ffe74330000 - 0x00007ffe743d3000 	C:\WINDOWS\System32\msvcp_win.dll
+0x00007ffe77060000 - 0x00007ffe77090000 	C:\WINDOWS\System32\IMM32.DLL
+0x00007ffe68ac0000 - 0x00007ffe68acc000 	C:\Users\pc\.jdks\temurin-17.0.8\bin\vcruntime140_1.dll
+0x00007ffe50f10000 - 0x00007ffe50fa1000 	C:\Users\pc\.jdks\temurin-17.0.8\bin\msvcp140.dll
+0x00007ffe071a0000 - 0x00007ffe07dec000 	C:\Users\pc\.jdks\temurin-17.0.8\bin\server\jvm.dll
+0x00007ffe770a0000 - 0x00007ffe77152000 	C:\WINDOWS\System32\ADVAPI32.dll
+0x00007ffe76a10000 - 0x00007ffe76ab6000 	C:\WINDOWS\System32\sechost.dll
+0x00007ffe767f0000 - 0x00007ffe76906000 	C:\WINDOWS\System32\RPCRT4.dll
+0x00007ffe5a240000 - 0x00007ffe5a276000 	C:\WINDOWS\SYSTEM32\WINMM.dll
+0x00007ffe6da10000 - 0x00007ffe6da1a000 	C:\WINDOWS\SYSTEM32\WSOCK32.dll
+0x00007ffe72f20000 - 0x00007ffe72f7e000 	C:\WINDOWS\SYSTEM32\POWRPROF.dll
+0x00007ffe72cf0000 - 0x00007ffe72cfb000 	C:\WINDOWS\SYSTEM32\VERSION.dll
+0x00007ffe75720000 - 0x00007ffe75794000 	C:\WINDOWS\System32\WS2_32.dll
+0x00007ffe72f00000 - 0x00007ffe72f14000 	C:\WINDOWS\SYSTEM32\UMPDC.dll
+0x00007ffe731d0000 - 0x00007ffe731ea000 	C:\WINDOWS\SYSTEM32\kernel.appcore.dll
+0x00007ffe5c850000 - 0x00007ffe5c85a000 	C:\Users\pc\.jdks\temurin-17.0.8\bin\jimage.dll
+0x00007ffe6e800000 - 0x00007ffe6ea41000 	C:\WINDOWS\SYSTEM32\DBGHELP.DLL
+0x00007ffe74f60000 - 0x00007ffe752e4000 	C:\WINDOWS\System32\combase.dll
+0x00007ffe75820000 - 0x00007ffe75900000 	C:\WINDOWS\System32\OLEAUT32.dll
+0x00007ffe598d0000 - 0x00007ffe59909000 	C:\WINDOWS\SYSTEM32\dbgcore.DLL
+0x00007ffe744d0000 - 0x00007ffe74569000 	C:\WINDOWS\System32\bcryptPrimitives.dll
+0x00007ffe58950000 - 0x00007ffe5895e000 	C:\Users\pc\.jdks\temurin-17.0.8\bin\instrument.dll
+0x00007ffe5c820000 - 0x00007ffe5c845000 	C:\Users\pc\.jdks\temurin-17.0.8\bin\java.dll
+0x00007ffe58ad0000 - 0x00007ffe58ae8000 	C:\Users\pc\.jdks\temurin-17.0.8\bin\zip.dll
+
+dbghelp: loaded successfully - version: 4.0.5 - missing functions: none
+symbol engine: initialized successfully - sym options: 0x614 - pdb path: .;C:\Users\pc\.jdks\temurin-17.0.8\bin;C:\WINDOWS\SYSTEM32;C:\WINDOWS\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.3912_none_3e07963ce335137e;C:\Users\pc\.jdks\temurin-17.0.8\bin\server
+
+VM Arguments:
+jvm_args: -javaagent:C:\Users\pc\AppData\Local\JetBrains\IdeaIC2025.1\captureAgent\debugger-agent.jar=file:///C:/Users/pc/AppData/Local/Temp/capture8449727598918592356.props -ea -DnodeNamesHandler=org.jetbrains.plugins.cucumber.java.run.CucumberTestTreeNodeManager -Didea.test.cyclic.buffer.size=1048576 -javaagent:C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2023.1.2\lib\idea_rt.jar=50841 -Dkotlinx.coroutines.debug.enable.creation.stack.trace=false -Ddebugger.agent.enable.coroutines=true -Dkotlinx.coroutines.debug.enable.flows.stack.trace=true -Dkotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace=true -Dfile.encoding=UTF-8 
+java_command: com.intellij.rt.junit.JUnitStarter -ideVersion5 -junit4 com.api.framework.testing.runner.TestRunner
+java_class_path (initial): C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2023.1.2\lib\idea_rt.jar;C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2023.1.2\plugins\junit\lib\junit5-rt.jar;C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2023.1.2\plugins\junit\lib\junit-rt.jar;C:\Documents\ApiFramwork\target\test-classes;C:\Documents\ApiFramwork\target\classes;C:\Users\pc\.m2\repository\io\cucumber\cucumber-java8\7.13.0\cucumber-java8-7.13.0.jar;C:\Users\pc\.m2\repository\org\apiguardian\apiguardian-api\1.1.2\apiguardian-api-1.1.2.jar;C:\Users\pc\.m2\repository\net\jodah\typetools\0.6.3\typetools-0.6.3.jar;C:\Users\pc\.m2\repository\io\cucumber\cucumber-core\7.13.0\cucumber-core-7.13.0.jar;C:\Users\pc\.m2\repository\io\cucumber\cucumber-gherkin\7.13.0\cucumber-gherkin-7.13.0.jar;C:\Users\pc\.m2\repository\io\cucumber\cucumber-gherkin-messages\7.13.0\cucumber-gherkin-messages-7.13.0.jar;C:\Users\pc\.m2\repository\io\cucumber\messages\22.0.0\messages-22.0.0.jar;C:\Users\pc\.m2\repository\io\cucumber\tag-expressions\5.0.1\tag-expressions-5.0.1.jar;C:\Users\pc\.m2\repository\io\cucumber\cucumber-expressions\16.1.2\cucumber-expressions-16.1.2.jar;C:\Users\pc\.m2\repository\io\cucumber\datatable\7.13.0\datatable-7.13.0.jar;C:\Users\pc\.m2\repository\io\cucumber\cucumber-plugin\7.13.0\cucumber-plugin-7.13.0.jar;C:\Users\pc\.m2\repository\io\cucumber\docstring\7.13.0\docstring-7.13.0.jar;C:\Users\pc\.m2\repository\io\cucumber\html-formatter\20.3.1\html-formatter-20.3.1.jar;C:\Users\pc\.m2\repository\io\cucumber\junit-xml-formatter\0.2.0\junit-xml-formatter-0.2.0.jar;C:\Users\pc\.m2\repository\io\cucumber\ci-environment\9.2.0\ci-environment-9.2.0.jar;C:\Users\pc\.m2\repository\io\cucumber\cucumber-picocontainer\7.13.0\cucumber-picocontainer-7.13.0.jar;C:\Users\pc\.m2\repository\org\picocontainer\picocontainer\2.15\picocontainer-2.15.jar;C:\Users\pc\.m2\repository\io\cucumber\gherkin\26.2.0\gherkin-26.2.0.jar;C:\Users\pc\.m2\repository\io\cuc
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+     intx CICompilerCount                          = 4                                         {product} {ergonomic}
+     uint ConcGCThreads                            = 2                                         {product} {ergonomic}
+     uint G1ConcRefinementThreads                  = 8                                         {product} {ergonomic}
+   size_t G1HeapRegionSize                         = 2097152                                   {product} {ergonomic}
+    uintx GCDrainStackTargetSize                   = 64                                        {product} {ergonomic}
+   size_t InitialHeapSize                          = 266338304                                 {product} {ergonomic}
+   size_t MarkStackSize                            = 4194304                                   {product} {ergonomic}
+   size_t MaxHeapSize                              = 4259315712                                {product} {ergonomic}
+   size_t MinHeapDeltaBytes                        = 2097152                                   {product} {ergonomic}
+   size_t MinHeapSize                              = 8388608                                   {product} {ergonomic}
+    uintx NonNMethodCodeHeapSize                   = 5839372                                {pd product} {ergonomic}
+    uintx NonProfiledCodeHeapSize                  = 122909434                              {pd product} {ergonomic}
+    uintx ProfiledCodeHeapSize                     = 122909434                              {pd product} {ergonomic}
+    uintx ReservedCodeCacheSize                    = 251658240                              {pd product} {ergonomic}
+     bool SegmentedCodeCache                       = true                                      {product} {ergonomic}
+   size_t SoftMaxHeapSize                          = 4259315712                             {manageable} {ergonomic}
+     bool UseCompressedClassPointers               = true                           {product lp64_product} {ergonomic}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseG1GC                                  = true                                      {product} {ergonomic}
+     bool UseLargePagesIndividualAllocation        = false                                  {pd product} {ergonomic}
+
+Logging:
+Log output configuration:
+ #0: stdout all=warning uptime,level,tags
+ #1: stderr all=off uptime,level,tags
+
+Environment Variables:
+PATH=C:\Ruby30\bin;C:\Ruby30-x64\bin;C:\Ruby32\bin;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files\Git\bin;C:\Program Files\Git\cmd;C:\Program Files\Cloud Foundry;C:\Program Files\nodejs\;C:\Program Files\OpenSSL-Win64\bin;C:\Users\pc\Downloads\mongosh-1.10.4-win32-x64\mongosh-1.10.4-win32-x64\bin;C:\Users\pc\Documents\VisaApplication\tessdata\eng.traineddata;C:\Program Files\Google\Chrome\Application\117.0.5938.89;C:\Users\pc\.jdks\temurin-17.0.8\bin;C:\Program Files\Microsoft\Edge\Application\117.0.2045.31;C:\Program Files\Mozilla Firefox;C:\Program Files\dotnet\;C:\Ruby27-x64\bin;C:\Users\pc\Desktop\apache-maven-3.9.2\bin;C:\Users\pc\AppData\Local\Programs\Python\Python313;C:\Users\pc\AppData\Local\Programs\Python\Python313\Scripts\pip.exe;C:\Program Files\Rancher Desktop\resources\resources\win32\bin\;C:\Program Files\Rancher Desktop\resources\resources\win32\docker-cli-plugins\;C:\Program Files\Rancher Desktop\resources\resources\linux\bin\;C:\Program Files\Rancher Desktop\resources\resources\linux\docker-cli-plugins\;C:\Users\pc\AppData\Local\Programs\Python\Python313\Scripts\;C:\Users\pc\AppData\Local\Programs\Python\Python313\;C:\Ruby31\bin;C:\RailsInstaller\Git\cmd;C:\RailsInstaller\Ruby2.3.3\bin;C:\Ruby27-x64\bin;C:\Ruby27\bin;C:\Users\pc\AppData\Local\Microsoft\WindowsApps;C:\Program Files\JetBrains\IntelliJ IDEA Community Edition 2023.1.2\bin;;C:\Program Files\heroku\bin;C:\Users\pc\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\pc\AppData\Roaming\npm;C:\Program Files\Google\Chrome\Application;C:\Users\pc\AppData\Local\Programs\Ollama;
+USERNAME=pc
+OS=Windows_NT
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 142 Stepping 10, GenuineIntel
+TMP=C:\Users\pc\AppData\Local\Temp
+TEMP=C:\Users\pc\AppData\Local\Temp
+
+
+
+---------------  S Y S T E M  ---------------
+
+OS:
+ Windows 11 , 64 bit Build 26100 (10.0.26100.3912)
+OS uptime: 15 days 15:33 hours
+Hyper-V role detected
+
+CPU: total 8 (initial active 8) (4 cores per cpu, 2 threads per core) family 6 model 142 stepping 10 microcode 0xf4, cx8, cmov, fxsr, ht, mmx, 3dnowpref, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, lzcnt, tsc, tscinvbit, avx, avx2, aes, erms, clmul, bmi1, bmi2, rtm, adx, fma, vzeroupper, clflush, clflushopt, hv
+Processor Information for processor 0
+  Max Mhz: 1896, Current Mhz: 1696, Mhz Limit: 1687
+Processor Information for processor 1
+  Max Mhz: 1896, Current Mhz: 1496, Mhz Limit: 1687
+Processor Information for processor 2
+  Max Mhz: 1896, Current Mhz: 1496, Mhz Limit: 1687
+Processor Information for processor 3
+  Max Mhz: 1896, Current Mhz: 1696, Mhz Limit: 1687
+Processor Information for processor 4
+  Max Mhz: 1896, Current Mhz: 1696, Mhz Limit: 1687
+Processor Information for processor 5
+  Max Mhz: 1896, Current Mhz: 1496, Mhz Limit: 1687
+Processor Information for processor 6
+  Max Mhz: 1896, Current Mhz: 1696, Mhz Limit: 1687
+Processor Information for processor 7
+  Max Mhz: 1896, Current Mhz: 1496, Mhz Limit: 1687
+
+Memory: 4k page, system-wide physical 16242M (1512M free)
+TotalPageFile size 46642M (AvailPageFile size 170M)
+current process WorkingSet (physical memory assigned to process): 12M, peak: 12M
+current process commit charge ("private bytes"): 60M, peak: 314M
+
+vm_info: OpenJDK 64-Bit Server VM (17.0.8+7) for windows-amd64 JRE (17.0.8+7), built on Jul 18 2023 21:02:32 by "admin" with MS VC++ 16.7 (VS2019)
+
+END.
