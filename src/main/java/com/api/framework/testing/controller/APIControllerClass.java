@@ -28,7 +28,7 @@ public class APIControllerClass {
             kafkaTemplate.send("qa-source-topic", message);
 
             System.out.println("Message sent: " + message);
-            return ResponseEntity.ok("Automation request sent successfully!");
+            return ResponseEntity.ok(message);
 
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Automation failed: " + e.getMessage());

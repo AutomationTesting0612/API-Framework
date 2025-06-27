@@ -8,7 +8,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
 
 @CucumberContextConfiguration
-@SpringBootTest
+@SpringBootTest(properties = {
+        "test-data.folder=src/test/resources/jsonfiles"
+})
 public class CucumberTestContextConfig {
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;

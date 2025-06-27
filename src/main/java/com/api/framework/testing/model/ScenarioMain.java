@@ -1,17 +1,19 @@
 package com.api.framework.testing.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(description = "API Framework Open API Swagger")
 public class ScenarioMain {
 
-    private String value;
 
+    @Schema(description = "HTML report string", example = SwaggerDocValue.REPORT)
     private String report;
 
-
+    @Schema(description = "List of data inputs", example = SwaggerDocValue.DATALIST)
     private List<DataList> data_list;
 
     public List<DataList> getData_list() {
@@ -22,14 +24,6 @@ public class ScenarioMain {
         this.data_list = data_list;
     }
 
-
-    public String getValue() {
-        return value;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
 
     public String getReport() {
         return report;
@@ -42,7 +36,6 @@ public class ScenarioMain {
     @Override
     public String toString() {
         return "ScenarioMain{" +
-                ", value='" + value + '\'' +
                 ", report='" + report + '\'' +
                 ", data_list=" + data_list +
                 '}';

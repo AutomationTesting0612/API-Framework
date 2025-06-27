@@ -32,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class Consumer {
@@ -60,37 +61,70 @@ public class Consumer {
     private String groupId;
 
     @KafkaListener(topics = "${kafka.source-topic}", groupId = "${kafka.group.id}", containerFactory = "manualAckListenerContainerFactory")
-    public void consumeMessage(String message, Acknowledgment ack) throws JsonProcessingException {
+    public void consumeMessage(List<String> message, Acknowledgment ack) throws JsonProcessingException {
         System.out.println("🔹 Received message from Kafka: " + message);
+        List<ScenarioMain> allScenarios;
 
         try {
-            String trimmed = message.trim();
+            String trimmed = message.stream()
+                    .collect(Collectors.joining())
+                    .trim();
             if (trimmed.startsWith("[")) {
-                scenario = objectMapper.readValue(
-                        trimmed,
-                        new TypeReference<List<ScenarioMain>>() {}
-                );
+                allScenarios = objectMapper.readValue(trimmed, new TypeReference<List<ScenarioMain>>() {});
             } else {
                 ScenarioMain single = objectMapper.readValue(trimmed, ScenarioMain.class);
-                scenario = Collections.singletonList(single);
+                allScenarios = Collections.singletonList(single);
             }
-            ack.acknowledge();
-//            receivedMessages.add(scenario);
-            setupExtentReports();
-            for (ScenarioMain scenario : scenario) {
-                if (scenario.getData_list() == null || scenario.getData_list().isEmpty()) {
-                    continue;  // skip empty payloads
-                }
 
-                doHttpCall(scenario);
+            setupExtentReports(); // Initialize only once
+            for (ScenarioMain scenario : allScenarios) {
+                if (scenario.getData_list() == null || scenario.getData_list().isEmpty()) {
+                    continue;
+                }
+                doHttpCall(scenario); // Append all results to same ExtentReport
             }
+
+            extent.flush(); // Flush only once after all scenarios
+            generateAndSendReport(allScenarios); // Pass list of all scenarios
+
             ack.acknowledge();
-            extent.flush();
-            generateAndSendReport(scenario);
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
+
+
+//    @KafkaListener(topics = "${kafka.source-topic}", groupId = "${kafka.group.id}", containerFactory = "manualAckListenerContainerFactory")
+//    public void consumeMessage(String message, Acknowledgment ack) throws JsonProcessingException {
+//        System.out.println("🔹 Received message from Kafka: " + message);
+//
+//        try {
+//            String trimmed = message.trim();
+//            if (trimmed.startsWith("[")) {
+//                scenario = objectMapper.readValue(
+//                        trimmed,
+//                        new TypeReference<List<ScenarioMain>>() {}
+//                );
+//            } else {
+//                ScenarioMain single = objectMapper.readValue(trimmed, ScenarioMain.class);
+//                scenario = Collections.singletonList(single);
+//            }
+//            ack.acknowledge();
+////            receivedMessages.add(scenario);
+//            setupExtentReports();
+//            for (ScenarioMain scenario : scenario) {
+//                if (scenario.getData_list() == null || scenario.getData_list().isEmpty()) {
+//                    continue;  // skip empty payloads
+//                }
+//
+//                doHttpCall(scenario);
+//            }
+//            ack.acknowledge();
+//
+//        }catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
 
     private void doHttpCall(ScenarioMain scenario) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
@@ -174,32 +208,34 @@ public class Consumer {
                 }
             }
 
+//        extent.flush();
+//        generateAndSendReport(scenario);
 
     }
 
 
-    private void generateAndSendReport(List<ScenarioMain> scenario) throws JsonProcessingException {
+    private void generateAndSendReport(List<ScenarioMain> scenarios) {
         try {
             String htmlContent = new String(Files.readAllBytes(Paths.get("APIReport.html")), StandardCharsets.UTF_8);
-            for(ScenarioMain sc: scenario) {
-                sc.setReport(htmlContent);
+
+            for (ScenarioMain scenario : scenarios) {
+                scenario.setReport(htmlContent);  // Attach same report to each scenario
             }
+
+            // Optional: if you want to send all scenarios together as JSON to Kafka
+            // String finalMessage = objectMapper.writeValueAsString(scenarios);
+            // kafkaTemplate.send(destinationTopic, finalMessage);
 
         } catch (IOException e) {
             System.err.println("❌ Failed to read Extent Report: " + e.getMessage());
         }
 
-//        String finalMessage = objectMapper.writeValueAsString(scenario);
-//        String responseTopic = "QATransaction_API_REPORT";
         System.out.println("📁 Report will be generated at: " + new File("APIReport.html").getAbsolutePath());
 
-//        kafkaTemplate.send(destinationTopic, finalMessage);
-//        System.out.println("📢 Published response to Kafka topic: " + responseTopic);
-
-        File file = new File("APIReport.html");
-        if (!file.delete()) {
-            System.err.println("⚠️ Failed to delete APIReport.html");
-        }
+//        File file = new File("APIReport.html");
+//        if (!file.delete()) {
+//            System.err.println("⚠️ Failed to delete APIReport.html");
+//        }
     }
 
     private void setupExtentReports() {

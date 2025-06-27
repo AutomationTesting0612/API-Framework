@@ -1,0 +1,33 @@
+name: Build and Deploy Docker Image
+
+on:
+  push:
+    branches:
+      - master  # or your deployment branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Maven project
+        run: mvn clean package -DskipTests
+
+      - name: Build Docker image locally
+        run: docker build -t APIframework .
+
+      - name: Run Docker container
+        run: |
+          docker run --name dockercontainer -d APIframework
+          echo "🕒 Waiting for 30s to let the app(s) start..."
+          sleep 30
+          docker logs dockercontainer

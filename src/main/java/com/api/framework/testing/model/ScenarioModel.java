@@ -1,6 +1,7 @@
 package com.api.framework.testing.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -10,8 +11,6 @@ public class ScenarioModel {
     private String name;
 
     private String description;
-
-    private String code;
 
     private List<DataSet> datasets;
 
@@ -31,13 +30,6 @@ public class ScenarioModel {
         this.description = description;
     }
 
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
 
     public List<DataSet> getDatasets() {
         return datasets;
