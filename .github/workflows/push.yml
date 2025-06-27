@@ -23,11 +23,11 @@ jobs:
         run: mvn clean package -DskipTests
 
       - name: Build Docker image locally
-        run: docker build -t APIframework .
+        run: docker build -t apiframework .
 
       - name: Run Docker container
         run: |
-          docker run --name dockercontainer -d APIframework
+          docker run --name dockercontainer -d apiframework
           echo "🕒 Waiting for 30s to let the app(s) start..."
           sleep 30
           docker logs dockercontainer
