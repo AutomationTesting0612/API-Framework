@@ -1,14 +1,19 @@
 package com.api.framework.testing.controller;
 
 import com.api.framework.testing.model.ScenarioMain;
+import com.api.framework.testing.swagger.ScenarioGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @RestController
 public class APIControllerClass {
@@ -19,6 +24,9 @@ public class APIControllerClass {
     public APIControllerClass(KafkaTemplate<String, String> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
+
+    @Autowired
+    private ScenarioGenerator scenarioGenerator;
 
     @PostMapping("create/api")
     public ResponseEntity<String> save(@RequestBody ScenarioMain uiModel) {
@@ -34,6 +42,13 @@ public class APIControllerClass {
             return ResponseEntity.status(500).body("Automation failed: " + e.getMessage());
         }
     }
+
+    @GetMapping("/generate")
+    public Map<String, Object> generateTestCasesFromSwagger() throws Exception {
+        return scenarioGenerator.generate();
+    }
+
+
 
 
 }

@@ -32,6 +32,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,6 +63,9 @@ public class Consumer {
     @Value("${kafka.group.id}")
     private String groupId;
 
+    @Value("${thread.count}")
+    private int threadCount;
+
     @KafkaListener(topics = "${kafka.source-topic}", groupId = "${kafka.group.id}", containerFactory = "manualAckListenerContainerFactory")
     public void consumeMessage(List<String> message, Acknowledgment ack) throws JsonProcessingException {
         System.out.println("🔹 Received message from Kafka: " + message);
@@ -77,13 +83,21 @@ public class Consumer {
             }
 
             setupExtentReports(); // Initialize only once
+            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
             for (ScenarioMain scenario : allScenarios) {
                 if (scenario.getData_list() == null || scenario.getData_list().isEmpty()) {
                     continue;
                 }
-                doHttpCall(scenario); // Append all results to same ExtentReport
+                executor.submit(() -> {
+                    try {
+                        doHttpCall(scenario);
+                    } catch (JsonProcessingException e) {
+                        e.printStackTrace();
+                    }
+                });
             }
-
+            executor.shutdown();
+            executor.awaitTermination(10, TimeUnit.MINUTES);
             extent.flush(); // Flush only once after all scenarios
             generateAndSendReport(allScenarios); // Pass list of all scenarios
 
@@ -141,11 +155,11 @@ public class Consumer {
                 if (header != null) {
                     header.forEach(headers::set);
                 }
-
-                test = extent.createTest("Feature: " + featureName)
-                        .assignCategory("API Testing")
-                        .assignAuthor("Automation Team");
-
+                synchronized (this) {
+                    test = extent.createTest("Feature: " + featureName)
+                            .assignCategory("API Testing")
+                            .assignAuthor("Automation Team");
+                }
 
                 List<DataSet> datasets = dataList.getScenario().getDatasets();
                 for (DataSet dataset : datasets) {
@@ -159,13 +173,14 @@ public class Consumer {
                     if (dataset.getParams() != null) {
                         endpoint = buildUrlWithParams(endpoint, dataset.getParams());
                     }
-
-                    test.info("📌 Endpoint: " + endpoint);
-                    test.info("🔄 HTTP Method: " + method);
-                    if (requestBody != null) {
-                        test.info("The Request Body is " + requestBody);
-                    } else {
-                        test.info("The Request Body is NA");
+                    synchronized (this) {
+                        test.info("📌 Endpoint: " + endpoint);
+                        test.info("🔄 HTTP Method: " + method);
+                        if (requestBody != null) {
+                            test.info("The Request Body is " + requestBody);
+                        } else {
+                            test.info("The Request Body is NA");
+                        }
                     }
                     try {
                         System.out.println("entity headers = " + entity.getHeaders());
@@ -187,20 +202,21 @@ public class Consumer {
                                 if (!isEqual) break; // Optionally break on first failure
                             }
                         }
+                        synchronized (this) {
+                            String expectedStatusCode = dataset.getDesired_status();
+                            expectedStatusCode = expectedStatusCode.replaceAll("\\s+", "");
+                            System.out.println(expectedStatusCode);
+                            if (String.valueOf(response.getStatusCodeValue()).equalsIgnoreCase(expectedStatusCode)) {
+                                test.pass("✅ The Expected Response code is : " + expectedStatusCode + "<br>The actual response code is " + response.getStatusCodeValue());
 
-                        String expectedStatusCode = dataset.getDesired_status();
-                        expectedStatusCode = expectedStatusCode.replaceAll("\\s+", "");
-                        System.out.println(expectedStatusCode);
-                        if (String.valueOf(response.getStatusCodeValue()).equalsIgnoreCase(expectedStatusCode)) {
-                            test.pass("✅ The Expected Response code is : " + expectedStatusCode + "<br>The actual response code is " + response.getStatusCodeValue());
-
-                        } else {
-                            test.fail("❌ Response Body / Status Code Mismatched " + expectedStatus + "<br>but got " + response.getStatusCodeValue());
-                        }
-                        if (Boolean.TRUE.equals(isEqual)) {
-                            test.pass("✅ The Expected Response Body is : " + dataset.getDesired_outcome() + "<br>The actual response Body is " + response.getBody());
-                        } else {
-                            test.fail("❌  The Mismatched field's value in Expected and Actual Response Body are : <br>" + mismatches);
+                            } else {
+                                test.fail("❌ Response Body / Status Code Mismatched " + expectedStatus + "<br>but got " + response.getStatusCodeValue());
+                            }
+                            if (Boolean.TRUE.equals(isEqual)) {
+                                test.pass("✅ The Expected Response Body is : " + dataset.getDesired_outcome() + "<br>The actual response Body is " + response.getBody());
+                            } else {
+                                test.fail("❌  The Mismatched field's value in Expected and Actual Response Body are : <br>" + mismatches);
+                            }
                         }
                     } catch (Exception e) {
                         test.fail("❌ API call failed for request: " + requestBody + " | Error: " + e.getMessage());
@@ -232,7 +248,7 @@ public class Consumer {
 
         System.out.println("📁 Report will be generated at: " + new File("APIReport.html").getAbsolutePath());
 
-//        File file = new File("APIReport.html");
+        File file = new File("APIReport.html");
 //        if (!file.delete()) {
 //            System.err.println("⚠️ Failed to delete APIReport.html");
 //        }

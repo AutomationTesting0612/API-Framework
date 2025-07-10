@@ -1,52 +1,210 @@
 package com.api.framework.testing.swagger;
 
-import com.api.framework.testing.model.DataList;
-import com.api.framework.testing.model.DataSet;
-import com.api.framework.testing.model.ScenarioMain;
-import com.api.framework.testing.model.ScenarioModel;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.parameters.Parameter;
+import io.swagger.v3.oas.models.parameters.RequestBody;
+import io.swagger.v3.parser.OpenAPIV3Parser;
+import io.swagger.v3.parser.core.models.SwaggerParseResult;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 
+@Service
 public class ScenarioGenerator {
 
-    public List<ScenarioMain> generateScenarios(OpenAPI openAPI) {
-        List<ScenarioMain> scenarios = new ArrayList<>();
+    @Value("${swagger.url}")
+    private String swaggerUrl;
+
+    @Value("${app.url}")
+    private String applicationUrl;
+
+    public Map<String, Object> generate() throws Exception {
+        SwaggerParseResult parseResult = new OpenAPIV3Parser().readLocation(swaggerUrl, null, null);
+        OpenAPI openAPI = parseResult.getOpenAPI();
+
+        Map<String, List<Map<String, Object>>> tagToTestCases = new HashMap<>();
 
         openAPI.getPaths().forEach((path, pathItem) -> {
-            pathItem.readOperationsMap().forEach((httpMethod, operation) -> {
+            Map<PathItem.HttpMethod, io.swagger.v3.oas.models.Operation> operations = pathItem.readOperationsMap();
 
-                ScenarioMain scenarioMain = new ScenarioMain();
-                DataList dataList = new DataList();
+            for (Map.Entry<PathItem.HttpMethod, io.swagger.v3.oas.models.Operation> entry : operations.entrySet()) {
+                PathItem.HttpMethod method = entry.getKey();
+                io.swagger.v3.oas.models.Operation operation = entry.getValue();
 
-                dataList.setBase_url("http://localhost:8096");
-                dataList.setEndPoint(path.replaceFirst("/", ""));
-                dataList.setMapping_type(httpMethod.name());
+                // Default tag if none defined
+                String tag = operation.getTags() != null && !operation.getTags().isEmpty()
+                        ? operation.getTags().get(0)
+                        : "default";
+
+                Schema<?> schema = null;
+                Map<String, Object> requestBody = new HashMap<>();
+
+                if (operation.getRequestBody() != null) {
+                    schema = extractSchema(operation.getRequestBody(), openAPI);
+                    if (schema != null) {
+                        requestBody = generateSampleRequest(schema, openAPI);
+                    }
+                }
+
+                // Path and query params
+                Map<String, String> queryParams = new HashMap<>();
+                String endpointPath = path;
+
+                if (operation.getParameters() != null) {
+                    for (Parameter param : operation.getParameters()) {
+                        String name = param.getName();
+                        String exampleValue = "sample_" + name;
+
+                        switch (param.getIn()) {
+                            case "path" -> endpointPath = endpointPath.replace("{" + name + "}", exampleValue);
+                            case "query" -> queryParams.put(name, exampleValue);
+                        }
+                    }
+                }
+
+                String fullEndpoint = endpointPath;
+                if (!queryParams.isEmpty()) {
+                    StringJoiner sj = new StringJoiner("&");
+                    queryParams.forEach((k, v) -> sj.add(k + "=" + v));
+                    fullEndpoint += "?" + sj;
+                }
+
+                // Build base test case
+                Map<String, Object> testCase = new HashMap<>();
+                testCase.put("baseUrl", applicationUrl);
+                testCase.put("endpoint", fullEndpoint.replaceFirst("^/", ""));
+                testCase.put("mappingType", method.name());
 
                 Map<String, String> headers = new HashMap<>();
-                headers.put("Content-Type", "application/json");
-                dataList.setHeader(headers);
+                headers.put("content-Type", "application/json");
+                testCase.put("header", headers);
 
-                ScenarioModel scenario = new ScenarioModel();
-                scenario.setName(operation.getSummary());
-                scenario.setDescription(operation.getDescription());
+                Map<String, Object> scenario = new HashMap<>();
+                scenario.put("name", Optional.ofNullable(operation.getSummary()).orElse("AutoGenerated Test"));
+                scenario.put("description", Optional.ofNullable(operation.getDescription()).orElse("Generated from Swagger"));
 
-                DataSet dataset = new DataSet();
-                dataset.setDesired_status("200");
-                dataset.setDesired_outcome("{\"message\": \"Success\"}");
-                dataset.setRequest_body(Map.of("sample", "value"));
+                List<Map<String, Object>> datasets = new ArrayList<>();
 
-                scenario.setDatasets(List.of(dataset));
-                dataList.setScenario(scenario);
-                scenarioMain.setData_list(List.of(dataList));
+                // Positive dataset
+                Map<String, Object> positiveDataset = new HashMap<>();
+                positiveDataset.put("request_body", requestBody);
+                positiveDataset.put("desired_status", getSuccessStatusCode(operation));
+                positiveDataset.put("desired_outcome", serializeJson(requestBody));
+                datasets.add(positiveDataset);
 
-                scenarios.add(scenarioMain);
-            });
+                if (schema != null) {
+                    datasets.addAll(generateNegativeTestCases(schema, requestBody, openAPI));
+                }
+
+                scenario.put("datasets", datasets);
+                testCase.put("scenario", scenario);
+
+                // Add to tag group
+                tagToTestCases.computeIfAbsent(tag, k -> new ArrayList<>()).add(testCase);
+            }
         });
 
-        return scenarios;
+        // Write separate files per controller/tag
+        ObjectMapper mapper = new ObjectMapper();
+        for (Map.Entry<String, List<Map<String, Object>>> entry : tagToTestCases.entrySet()) {
+            Map<String, Object> finalMap = new HashMap<>();
+            finalMap.put("report", null);
+            finalMap.put("data_list", entry.getValue());
+
+            String fileName = "generated-testcases-" + entry.getKey().toLowerCase().replaceAll("\\s+", "_") + ".json";
+            mapper.writeValue(new File(fileName), finalMap);
+            System.out.println("✅ Generated file: " + "generated-testcases-"+fileName);
+        }
+
+        return Map.of("status", "success", "filesGenerated", tagToTestCases.keySet());
+    }
+
+
+    private String serializeJson(Map<String, Object> data) {
+        try {
+            return new ObjectMapper().writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            return "{}";
+        }
+    }
+
+    private String getSuccessStatusCode(io.swagger.v3.oas.models.Operation operation) {
+        return operation.getResponses().keySet().stream()
+                .filter(code -> code.matches("\\d{3}") && code.startsWith("2"))
+                .findFirst()
+                .orElse("200");
+    }
+
+    private Schema<?> extractSchema(RequestBody requestBody, OpenAPI openAPI) {
+        if (requestBody.getContent() != null &&
+                requestBody.getContent().get("application/json") != null &&
+                requestBody.getContent().get("application/json").getSchema() != null) {
+            Schema<?> schema = requestBody.getContent().get("application/json").getSchema();
+            if (schema.get$ref() != null) {
+                String refName = schema.get$ref().replace("#/components/schemas/", "");
+                return openAPI.getComponents().getSchemas().get(refName);
+            }
+            return schema;
+        }
+        return null;
+    }
+
+    private Map<String, Object> generateSampleRequest(Schema<?> schema, OpenAPI openAPI) {
+        Map<String, Object> sample = new HashMap<>();
+
+        if (schema.get$ref() != null) {
+            String refName = schema.get$ref().replace("#/components/schemas/", "");
+            schema = openAPI.getComponents().getSchemas().get(refName);
+        }
+
+        if (schema.getProperties() != null) {
+            schema.getProperties().forEach((key, value) -> {
+                Schema<?> prop = (Schema<?>) value;
+                Object val = switch (Optional.ofNullable(prop.getType()).orElse("string")) {
+                    case "string" -> "sample_" + key;
+                    case "integer" -> 123;
+                    case "boolean" -> true;
+                    case "number" -> 99.99;
+                    case "object" -> generateSampleRequest(prop, openAPI);
+                    default -> "unknown";
+                };
+                sample.put(key, val);
+            });
+        }
+
+        return sample;
+    }
+
+    private List<Map<String, Object>> generateNegativeTestCases(
+            Schema<?> schema, Map<String, Object> originalRequest, OpenAPI openAPI) {
+
+        List<Map<String, Object>> negativeCases = new ArrayList<>();
+
+        if (schema.get$ref() != null) {
+            String refName = schema.get$ref().replace("#/components/schemas/", "");
+            schema = openAPI.getComponents().getSchemas().get(refName);
+        }
+
+        if (schema.getRequired() != null) {
+            for (String requiredField : schema.getRequired()) {
+                Map<String, Object> copy = new HashMap<>(originalRequest);
+                copy.remove(requiredField);
+
+                Map<String, Object> testCase = new HashMap<>();
+                testCase.put("request_body", copy);
+                testCase.put("desired_status", "400");
+                testCase.put("desired_outcome", "{\"error\": \"Missing field: " + requiredField + "\"}");
+
+                negativeCases.add(testCase);
+            }
+        }
+
+        return negativeCases;
     }
 }

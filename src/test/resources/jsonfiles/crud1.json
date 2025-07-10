@@ -1,36 +1,47 @@
 {
-  "report": null,
-  "data_list":
-  [
+  "data_list": [
     {
-      "baseUrl": "http://localhost:8095/",
-      "endpoint": "employees",
+      "baseUrl": "http://localhost:8095",
+      "endpoint": "person",
+      "scenario": {
+        "code": "200",
+        "name": "Add a new employee",
+        "description": "Test generated from Swagger",
+        "datasets": [
+          {
+            "desired_status": "200",
+            "request_body": {},
+            "desired_outcome": "{}"
+          }
+        ]
+      },
       "mappingType": "POST",
-      "header":
-      {"content-Type": "application/json"},
-      "scenario":
-
-        {
-          "name": "API",
-          "description": "TESTING THE API",
-          "code": "200",
-          "datasets":
-          [{
-            "request_body":
-            {
-              "id": 4,
-              "name" : "Akhil14",
-              "age": 30,
-              "address": "testing12"
-            },
-            "desired_status":"200",
-            "desired_outcome": "{\n  \"name\": \"Akhil\",\n  \"age\": \"32\"\n,\n  \"address\": \"testing\"\n}"
-
-          }]
-        }
-
-
+      "header": {
+        "content-Type": "application/json"
+      }
+    },
+    {
+      "baseUrl": "http://localhost:8095",
+      "endpoint": "employees",
+      "scenario": {
+        "code": "200",
+        "name": "Add a new employee",
+        "description": "Test generated from Swagger",
+        "datasets": [
+          {
+            "desired_status": "200",
+            "request_body": {},
+            "desired_outcome": "{}"
+          }
+        ]
+      },
+      "mappingType": "POST",
+      "header": {
+        "content-Type": "application/json"
+      }
     }
-  ]
-
+  ],
+  "report": null
 }
+Response headers
+connection: keep-aliv

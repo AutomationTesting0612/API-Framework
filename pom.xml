@@ -133,6 +133,11 @@
             <artifactId>junit-platform-suite</artifactId>
             <version>1.10.2</version>
         </dependency>
+        <dependency>
+            <groupId>io.swagger.parser.v3</groupId>
+            <artifactId>swagger-parser</artifactId>
+            <version>2.1.16</version>
+        </dependency>
 
 
         <!-- JUnit 5 Platform Suite API -->

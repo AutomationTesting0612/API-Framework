@@ -11,7 +11,7 @@
       "scenario":
 
         {
-          "name": "API Testing",
+          "name": "API Testing 1",
           "description": "TESTING THE API Second",
           "code": "200",
           "datasets":
@@ -28,6 +28,64 @@
 
           }]
         }
+
+
+    },
+    {
+      "baseUrl": "http://localhost:8095/",
+      "endpoint": "employees",
+      "mappingType": "PUT",
+      "header":
+      {"content-Type": "application/json"},
+      "scenario":
+
+      {
+        "name": "API Testing 2",
+        "description": "TESTING THE API Second",
+        "code": "200",
+        "datasets":
+        [{
+          "request_body":
+          {
+            "id": 5,
+            "name" : "Akhil14",
+            "age": 30,
+            "address": "testing12"
+          },
+          "desired_status":"200",
+          "desired_outcome": "{\n  \"name\": \"Akhil\",\n  \"age\": \"32\"\n,\n  \"address\": \"testing\"\n}"
+
+        }]
+      }
+
+
+    },
+    {
+      "baseUrl": "http://localhost:8095/",
+      "endpoint": "employees",
+      "mappingType": "POST",
+      "header":
+      {"content-Type": "application/json"},
+      "scenario":
+
+      {
+        "name": "API Testing 3",
+        "description": "TESTING THE API Second",
+        "code": "200",
+        "datasets":
+        [{
+          "request_body":
+          {
+            "id": 5,
+            "name" : "Akhil14",
+            "age": 30,
+            "address": "testing12"
+          },
+          "desired_status":"200",
+          "desired_outcome": "{\n  \"name\": \"Akhil\",\n  \"age\": \"32\"\n,\n  \"address\": \"testing\"\n}"
+
+        }]
+      }
 
 
     }
