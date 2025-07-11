@@ -3,7 +3,6 @@ package com.api.framework.testing.consumer;
 
 import com.api.framework.testing.model.DataList;
 import com.api.framework.testing.model.DataSet;
-import com.api.framework.testing.model.RecStatus;
 import com.api.framework.testing.model.ScenarioMain;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
@@ -13,14 +12,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -32,9 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -83,150 +77,100 @@ public class Consumer {
             }
 
             setupExtentReports(); // Initialize only once
-            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+//            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
             for (ScenarioMain scenario : allScenarios) {
                 if (scenario.getData_list() == null || scenario.getData_list().isEmpty()) {
                     continue;
                 }
-                executor.submit(() -> {
-                    try {
-                        doHttpCall(scenario);
-                    } catch (JsonProcessingException e) {
-                        e.printStackTrace();
-                    }
-                });
+
+                doHttpCall(scenario);
+
             }
-            executor.shutdown();
-            executor.awaitTermination(10, TimeUnit.MINUTES);
+            ack.acknowledge();
             extent.flush(); // Flush only once after all scenarios
             generateAndSendReport(allScenarios); // Pass list of all scenarios
 
-            ack.acknowledge();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-
-//    @KafkaListener(topics = "${kafka.source-topic}", groupId = "${kafka.group.id}", containerFactory = "manualAckListenerContainerFactory")
-//    public void consumeMessage(String message, Acknowledgment ack) throws JsonProcessingException {
-//        System.out.println("🔹 Received message from Kafka: " + message);
-//
-//        try {
-//            String trimmed = message.trim();
-//            if (trimmed.startsWith("[")) {
-//                scenario = objectMapper.readValue(
-//                        trimmed,
-//                        new TypeReference<List<ScenarioMain>>() {}
-//                );
-//            } else {
-//                ScenarioMain single = objectMapper.readValue(trimmed, ScenarioMain.class);
-//                scenario = Collections.singletonList(single);
-//            }
-//            ack.acknowledge();
-////            receivedMessages.add(scenario);
-//            setupExtentReports();
-//            for (ScenarioMain scenario : scenario) {
-//                if (scenario.getData_list() == null || scenario.getData_list().isEmpty()) {
-//                    continue;  // skip empty payloads
-//                }
-//
-//                doHttpCall(scenario);
-//            }
-//            ack.acknowledge();
-//
-//        }catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     private void doHttpCall(ScenarioMain scenario) throws JsonProcessingException {
         HttpHeaders headers = new HttpHeaders();
         headers.set("User-Agent", "PostmanRuntime/7.43.3");
 
 
-            for (DataList dataList : scenario.getData_list()) {
+        for (DataList dataList : scenario.getData_list()) {
 
-                HttpMethod method = HttpMethod.valueOf(dataList.getMapping_type());
-                featureName = dataList.getScenario().getName();
-                operationType = dataList.getMapping_type();
-                header = dataList.getHeader();
+            HttpMethod method = HttpMethod.valueOf(dataList.getMapping_type());
+            featureName = dataList.getScenario().getName();
+            operationType = dataList.getMapping_type();
+            header = dataList.getHeader();
 
-                if (header != null) {
-                    header.forEach(headers::set);
-                }
-                synchronized (this) {
-                    test = extent.createTest("Feature: " + featureName)
-                            .assignCategory("API Testing")
-                            .assignAuthor("Automation Team");
-                }
+            if (header != null) {
+                header.forEach(headers::set);
+            }
+//                synchronized (this) {
+//            test = extent.createTest("Feature: " + featureName)
+//                    .assignCategory("API Testing")
+//                    .assignAuthor("Automation Team");
+//                }
 
-                List<DataSet> datasets = dataList.getScenario().getDatasets();
-                for (DataSet dataset : datasets) {
+            List<DataSet> datasets = dataList.getScenario().getDatasets();
+            for (DataSet dataset : datasets) {
+                ExtentTest test = extent.createTest("Feature: " + featureName + " [" + operationType + "]")
+                        .assignCategory("API Testing")
+                        .assignAuthor("Automation Team");
 
+                try {
                     Map<String, Object> requestBody = dataset.getRequest_body() != null && !dataset.getRequest_body().isEmpty()
                             ? dataset.getRequest_body()
                             : null;
                     HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
                     String expectedStatus = dataset.getDesired_status() != null ? dataset.getDesired_status() : "";
                     String endpoint = dataList.getBase_url() + dataList.getEndPoint();
+
                     if (dataset.getParams() != null) {
                         endpoint = buildUrlWithParams(endpoint, dataset.getParams());
                     }
-                    synchronized (this) {
-                        test.info("📌 Endpoint: " + endpoint);
-                        test.info("🔄 HTTP Method: " + method);
-                        if (requestBody != null) {
-                            test.info("The Request Body is " + requestBody);
-                        } else {
-                            test.info("The Request Body is NA");
+
+                    test.info("📌 Endpoint: " + endpoint);
+                    test.info("🔄 HTTP Method: " + method);
+                    test.info("📦 Request Body: " + (requestBody != null ? requestBody : "NA"));
+
+                    ResponseEntity<String> response = restTemplate.exchange(endpoint, method, entity, String.class);
+
+                    JsonNode expectedRoot = objectMapper.readTree(dataset.getDesired_outcome());
+                    JsonNode actualNode = objectMapper.readTree(response.getBody());
+
+                    boolean isEqual = true;
+                    if (expectedRoot.isObject()) {
+                        isEqual = compareOnlyExpectedFields(expectedRoot, actualNode);
+                    } else if (expectedRoot.isArray()) {
+                        for (JsonNode expectedNode : expectedRoot) {
+                            isEqual = compareOnlyExpectedFields(expectedNode, actualNode);
+                            if (!isEqual) break;
                         }
                     }
-                    try {
-                        System.out.println("entity headers = " + entity.getHeaders());
-                        ResponseEntity<String> response = restTemplate.exchange(endpoint, method, entity, String.class);
 
-                        System.out.println(response);
-                        JsonNode expectedRoot = objectMapper.readTree(dataset.getDesired_outcome());
-                        JsonNode actualNode = objectMapper.readTree(response.getBody());
-
-                        boolean isEqual = true;
-                        // If it's a JSON object
-                        if (expectedRoot.isObject()) {
-                            isEqual = compareOnlyExpectedFields(expectedRoot, actualNode);
-                        }
-                        // If it's a JSON array
-                        else if (expectedRoot.isArray()) {
-                            for (JsonNode expectedNode : expectedRoot) {
-                                isEqual = compareOnlyExpectedFields(expectedNode, actualNode);
-                                if (!isEqual) break; // Optionally break on first failure
-                            }
-                        }
-                        synchronized (this) {
-                            String expectedStatusCode = dataset.getDesired_status();
-                            expectedStatusCode = expectedStatusCode.replaceAll("\\s+", "");
-                            System.out.println(expectedStatusCode);
-                            if (String.valueOf(response.getStatusCodeValue()).equalsIgnoreCase(expectedStatusCode)) {
-                                test.pass("✅ The Expected Response code is : " + expectedStatusCode + "<br>The actual response code is " + response.getStatusCodeValue());
-
-                            } else {
-                                test.fail("❌ Response Body / Status Code Mismatched " + expectedStatus + "<br>but got " + response.getStatusCodeValue());
-                            }
-                            if (Boolean.TRUE.equals(isEqual)) {
-                                test.pass("✅ The Expected Response Body is : " + dataset.getDesired_outcome() + "<br>The actual response Body is " + response.getBody());
-                            } else {
-                                test.fail("❌  The Mismatched field's value in Expected and Actual Response Body are : <br>" + mismatches);
-                            }
-                        }
-                    } catch (Exception e) {
-                        test.fail("❌ API call failed for request: " + requestBody + " | Error: " + e.getMessage());
+                    if (String.valueOf(response.getStatusCodeValue()).equalsIgnoreCase(expectedStatus)) {
+                        test.pass("✅ Status Code Matched: " + expectedStatus);
+                    } else {
+                        test.fail("❌ Status Code Mismatch. Expected: " + expectedStatus + ", Actual: " + response.getStatusCodeValue());
                     }
+
+                    if (Boolean.TRUE.equals(isEqual)) {
+                        test.pass("✅ Response Body Matched: " + response.getBody());
+                    } else {
+                        test.fail("❌ Response Body Mismatches: <br>" + mismatches);
+                    }
+
+                } catch (Exception e) {
+                    test.fail("❌ API call failed: " + e.getMessage());
                 }
             }
-
-//        extent.flush();
-//        generateAndSendReport(scenario);
-
+        }
     }
 
 
@@ -238,23 +182,23 @@ public class Consumer {
                 scenario.setReport(htmlContent);  // Attach same report to each scenario
             }
 
-            // Optional: if you want to send all scenarios together as JSON to Kafka
-            // String finalMessage = objectMapper.writeValueAsString(scenarios);
-            // kafkaTemplate.send(destinationTopic, finalMessage);
-
         } catch (IOException e) {
             System.err.println("❌ Failed to read Extent Report: " + e.getMessage());
         }
 
         System.out.println("📁 Report will be generated at: " + new File("APIReport.html").getAbsolutePath());
 
-        File file = new File("APIReport.html");
-//        if (!file.delete()) {
-//            System.err.println("⚠️ Failed to delete APIReport.html");
-//        }
     }
 
     private void setupExtentReports() {
+        File reportFile = new File("APIReport.html");
+        if (reportFile.exists()) {
+            if (reportFile.delete()) {
+                System.out.println("🧹 Old report deleted successfully.");
+            } else {
+                System.err.println("⚠️ Failed to delete existing APIReport.html");
+            }
+        }
         ExtentHtmlReporter htmlReporter = new ExtentHtmlReporter(new File("APIReport.html"));
         htmlReporter.config().setDocumentTitle("API Test Report");
         htmlReporter.config().setReportName("API Message Processing");
