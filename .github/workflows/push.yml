@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       zookeeper:
-        image: wurstmeister/zookeeper:3.4
+        image: bitnami/zookeeper:3.8.4
         ports:
           - 2181:2181
 
