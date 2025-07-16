@@ -34,14 +34,10 @@ import java.util.stream.Collectors;
 @Service
 public class Consumer {
 
-    private final List<ScenarioMain> receivedMessages = new ArrayList<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RestTemplate restTemplate = new RestTemplate();
 
     private ExtentReports extent;
-    private ExtentTest test;
-
-    private List<ScenarioMain> scenario;
     private String featureName = "Unknown Feature";
     private String operationType = null;
     private Map<String, String> header;
