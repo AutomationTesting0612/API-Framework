@@ -68,6 +68,7 @@ jobs:
       - name: run the cucumber
         run:
           mvn clean verify
+          sleep 30
 
       - name: Upload API Report
         uses: actions/upload-artifact@v4
