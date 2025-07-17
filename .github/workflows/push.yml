@@ -62,7 +62,6 @@ jobs:
       - name: Build Docker image locally
         run:
           java -jar ${{ github.workspace }}/target/ApiFramwork-0.0.1-SNAPSHOT.jar
-          mvn clean install
 
       - name: Build Docker image locally
         run:
