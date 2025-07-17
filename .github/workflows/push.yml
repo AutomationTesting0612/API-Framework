@@ -48,13 +48,13 @@ jobs:
           echo "Waiting for Kafka to be ready..."
           sleep 30  # Adjust if needed for readiness
 
-      - name: Download embedded SQL schema
-        run: |
-          curl -L -o src/main/resources/schema.sql https://raw.githubusercontent.com/<your-org>/<repo>/main/sql/schema.sql
-
-      - name: (Optional) Download data.sql for test data
-        run: |
-          curl -L -o src/main/resources/data.sql https://raw.githubusercontent.com/<your-org>/<repo>/main/sql/data.sql
+#      - name: Download embedded SQL schema
+#        run: |
+#          curl -L -o src/main/resources/schema.sql https://raw.githubusercontent.com/<your-org>/<repo>/main/sql/schema.sql
+#
+#      - name: (Optional) Download data.sql for test data
+#        run: |
+#          curl -L -o src/main/resources/data.sql https://raw.githubusercontent.com/<your-org>/<repo>/main/sql/data.sql
 
       - name: Build Maven project
         run: mvn clean install -DskipTests
