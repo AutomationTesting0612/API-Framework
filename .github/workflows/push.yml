@@ -48,12 +48,19 @@ jobs:
           echo "Waiting for Kafka to be ready..."
           sleep 30  # Adjust if needed for readiness
 
+      - name: Download embedded SQL schema
+        run: |
+          curl -L -o src/main/resources/schema.sql https://raw.githubusercontent.com/<your-org>/<repo>/main/sql/schema.sql
+
+      - name: (Optional) Download data.sql for test data
+        run: |
+          curl -L -o src/main/resources/data.sql https://raw.githubusercontent.com/<your-org>/<repo>/main/sql/data.sql
+
       - name: Build Maven project
         run: mvn clean install -DskipTests
 
       - name: Build Docker image locally
         run:
-          java -jar ${{ github.workspace }}/Employee-Management-System-0.0.1-SNAPSHOT.jar
           java -jar ${{ github.workspace }}/target/ApiFramwork-0.0.1-SNAPSHOT.jar
           mvn clean install
 
