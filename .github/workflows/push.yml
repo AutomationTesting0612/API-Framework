@@ -59,11 +59,13 @@ jobs:
       - name: Build Maven project
         run: mvn clean install -DskipTests
 
-      - name: Build Docker image locally
-        run:
-          java -jar ${{ github.workspace }}/target/ApiFramwork-0.0.1-SNAPSHOT.jar
+      - name: Start Spring Boot app in background
+        run: |
+          nohup java -jar ${{ github.workspace }}/target/ApiFramwork-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+          echo "App started"
+          sleep 20
 
-      - name: Build Docker image locally
+      - name: run the cucumber
         run:
           mvn clean test
 
