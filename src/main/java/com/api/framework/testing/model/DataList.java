@@ -20,7 +20,6 @@ public class DataList {
 
     private Map<String, String> header;
     private ScenarioModel scenario;
-    private List<DataModel> data_model;
 
     public String getBase_url() {
         return base_url;
@@ -62,11 +61,4 @@ public class DataList {
         this.scenario = scenario;
     }
 
-    public List<DataModel> getData_model() {
-        return data_model;
-    }
-
-    public void setData_model(List<DataModel> data_model) {
-        this.data_model = data_model;
-    }
 }

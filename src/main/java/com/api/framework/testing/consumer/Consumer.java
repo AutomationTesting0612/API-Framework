@@ -12,14 +12,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -34,10 +37,14 @@ import java.util.stream.Collectors;
 @Service
 public class Consumer {
 
+    private final List<ScenarioMain> receivedMessages = new ArrayList<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final RestTemplate restTemplate = new RestTemplate();
 
     private ExtentReports extent;
+    private ExtentTest test;
+
+    private List<ScenarioMain> scenario;
     private String featureName = "Unknown Feature";
     private String operationType = null;
     private Map<String, String> header;
@@ -66,7 +73,8 @@ public class Consumer {
                     .collect(Collectors.joining())
                     .trim();
             if (trimmed.startsWith("[")) {
-                allScenarios = objectMapper.readValue(trimmed, new TypeReference<List<ScenarioMain>>() {});
+                allScenarios = objectMapper.readValue(trimmed, new TypeReference<List<ScenarioMain>>() {
+                });
             } else {
                 ScenarioMain single = objectMapper.readValue(trimmed, ScenarioMain.class);
                 allScenarios = Collections.singletonList(single);
@@ -137,7 +145,7 @@ public class Consumer {
 
                     ResponseEntity<String> response = restTemplate.exchange(endpoint, method, entity, String.class);
 
-                    JsonNode expectedRoot = objectMapper.readTree(dataset.getDesired_outcome());
+                    JsonNode expectedRoot = dataset.getDesired_outcome();
                     JsonNode actualNode = objectMapper.readTree(response.getBody());
 
                     boolean isEqual = true;
@@ -205,6 +213,7 @@ public class Consumer {
         extent.setSystemInfo("Environment", "Local");
         extent.setSystemInfo("Tester", "Automation Team");
     }
+
     public String buildUrlWithParams(String baseUrl, Map<String, String> params) {
         StringBuilder urlBuilder = new StringBuilder(baseUrl);
 
@@ -272,5 +281,20 @@ public class Consumer {
         return mismatches;
     }
 
+    @PostConstruct
+    public void customizeRestTemplate() {
+        restTemplate.setErrorHandler(new ResponseErrorHandler() {
+            @Override
+            public boolean hasError(ClientHttpResponse response) {
+                return false; // Don't treat any response as error
+            }
 
+            @Override
+            public void handleError(ClientHttpResponse response) {
+                // No-op
+            }
+        });
+
+
+    }
 }

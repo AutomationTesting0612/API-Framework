@@ -4,6 +4,8 @@ import com.api.framework.testing.model.DataList;
 import com.api.framework.testing.model.DataSet;
 import com.api.framework.testing.model.ScenarioMain;
 import com.api.framework.testing.model.ScenarioModel;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.models.OpenAPI;
 
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ public class SwaggerConfiguration {
 
     public List<ScenarioMain> generateScenarios(OpenAPI openAPI) {
         List<ScenarioMain> scenarios = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
 
         openAPI.getPaths().forEach((path, pathItem) -> {
             pathItem.readOperationsMap().forEach((httpMethod, operation) -> {
@@ -36,7 +39,11 @@ public class SwaggerConfiguration {
 
                 DataSet dataset = new DataSet();
                 dataset.setDesired_status("200");
-                dataset.setDesired_outcome("{\"message\": \"Success\"}");
+                try {
+                    dataset.setDesired_outcome(mapper.readTree("{\"message\": \"Success\"}"));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
                 dataset.setRequest_body(Map.of("sample", "value"));
 
                 scenario.setDatasets(List.of(dataset));

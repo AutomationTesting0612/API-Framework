@@ -1,6 +1,7 @@
 package com.api.framework.testing.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -10,12 +11,9 @@ import java.util.Map;
 public class DataSet {
 
     private Map<String, Object> request_body;
-    private String desired_outcome_format;
-    private String desired_outcome;
+    private JsonNode desired_outcome;
     private String desired_status;
-
     private Authorization authorization;
-    private List<AcceptanceCriteria> acceptance_criteria;
     private Map<String,String> params;
 
 
@@ -36,19 +34,12 @@ public class DataSet {
         this.request_body = request_body;
     }
 
-    public String getDesired_outcome_format() {
-        return desired_outcome_format;
-    }
 
-    public void setDesired_outcome_format(String desired_outcome_format) {
-        this.desired_outcome_format = desired_outcome_format;
-    }
-
-    public String getDesired_outcome() {
+    public JsonNode getDesired_outcome() {
         return desired_outcome;
     }
 
-    public void setDesired_outcome(String desired_outcome) {
+    public void setDesired_outcome(JsonNode desired_outcome) {
         this.desired_outcome = desired_outcome;
     }
 
@@ -68,11 +59,4 @@ public class DataSet {
         this.authorization = authorization;
     }
 
-    public List<AcceptanceCriteria> getAcceptance_criteria() {
-        return acceptance_criteria;
-    }
-
-    public void setAcceptance_criteria(List<AcceptanceCriteria> acceptance_criteria) {
-        this.acceptance_criteria = acceptance_criteria;
-    }
 }
