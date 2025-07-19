@@ -57,7 +57,7 @@ jobs:
 #          curl -L -o src/main/resources/data.sql https://raw.githubusercontent.com/<your-org>/<repo>/main/sql/data.sql
 
       - name: Build Maven project
-        run: mvn clean install -DskipTests
+        run: mvn clean package
 
       - name: Start Spring Boot app in background
         run: |

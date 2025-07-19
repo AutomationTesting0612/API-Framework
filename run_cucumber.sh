@@ -3,6 +3,8 @@
 WORKSPACE=$1
 PORT=8096
 
+ls -l "$WORKSPACE"/target/
+
 # Start Spring Boot app
 java -Dserver.port=$PORT -jar "$WORKSPACE"/target/ApiFramwork-0.0.1-SNAPSHOT.jar > "$WORKSPACE/common.out" 2>&1 & pid4=$!
 echo "Spring Boot PID: ${pid4}"
@@ -33,6 +35,8 @@ fi
 
 # Run your tests
 mvn clean test
+
+ls -l "$WORKSPACE"/target/
 
 # Optional: Cleanup
 sleep 40s
