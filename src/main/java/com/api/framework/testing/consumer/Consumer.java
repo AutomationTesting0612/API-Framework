@@ -211,7 +211,7 @@ public class Consumer {
             // Beautify the report
             htmlReporter.config().setDocumentTitle("🚀 API Test Report");
             htmlReporter.config().setReportName("🧪 API Message Processing Suite");
-            htmlReporter.config().setTheme(Theme.STANDARD); // Only STANDARD and DARK available in 3.1.3
+            htmlReporter.config().setTheme(Theme.DARK); // Only STANDARD and DARK available in 3.1.3
             htmlReporter.config().setEncoding("utf-8");
             htmlReporter.config().setChartVisibilityOnOpen(true);
             htmlReporter.config().setTestViewChartLocation(
