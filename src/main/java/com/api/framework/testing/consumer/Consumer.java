@@ -6,7 +6,7 @@ import com.api.framework.testing.model.DataSet;
 import com.api.framework.testing.model.ScenarioMain;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
-import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
+import com.aventstack.extentreports.reporter.ExtentSparkReporter;
 import com.aventstack.extentreports.reporter.configuration.Theme;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -207,7 +207,7 @@ public class Consumer {
                 }
             }
 
-            ExtentHtmlReporter htmlReporter = new ExtentHtmlReporter(reportPath);
+            ExtentSparkReporter htmlReporter = new ExtentSparkReporter(reportPath);
             htmlReporter.config().setDocumentTitle("API Test Report");
             htmlReporter.config().setReportName("API Message Processing");
             htmlReporter.config().setTheme(Theme.STANDARD);
