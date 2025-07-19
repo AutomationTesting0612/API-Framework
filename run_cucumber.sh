@@ -36,6 +36,10 @@ mvn clean test
 
 # Optional: Cleanup
 sleep 40s
+# ✅ Show application logs after test execution
+echo "======== Application Logs (post-test) ========"
+tail -n 100 "$WORKSPACE/common.out" || echo "No logs found"
+
 ls -ltr
 head -n 40 APIReport.html
 kill $pid4 || true
