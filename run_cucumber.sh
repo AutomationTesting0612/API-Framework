@@ -11,7 +11,7 @@ STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" http://localhost:$PORT/actuato
 
 echo "STATUS :$STATUS, Exit code: $?"
 
-mvn clean verify
+mvn clean test
 
 sleep 40s
 
