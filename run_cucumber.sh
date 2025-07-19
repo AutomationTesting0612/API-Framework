@@ -35,6 +35,7 @@ fi
 mvn clean test
 
 # Optional: Cleanup
-sleep 10
+sleep 40s
 kill $pid4 || true
+
 
