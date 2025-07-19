@@ -34,7 +34,7 @@ if [ "$SUCCESS" != "true" ]; then
 fi
 
 # Run your tests
-mvn clean test
+mvn test
 
 ls -l "$WORKSPACE"/target/
 
