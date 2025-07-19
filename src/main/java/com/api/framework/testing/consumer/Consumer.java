@@ -197,23 +197,31 @@ public class Consumer {
     }
 
     private void setupExtentReports() {
-        File reportFile = new File("APIReport.html");
-        if (reportFile.exists()) {
-            if (reportFile.delete()) {
-                System.out.println("🧹 Old report deleted successfully.");
-            } else {
-                System.err.println("⚠️ Failed to delete existing APIReport.html");
-            }
-        }
-        ExtentHtmlReporter htmlReporter = new ExtentHtmlReporter(new File("APIReport.html"));
-        htmlReporter.config().setDocumentTitle("API Test Report");
-        htmlReporter.config().setReportName("API Message Processing");
-        htmlReporter.config().setTheme(Theme.STANDARD);
+        try {
+            String reportPath = System.getProperty("user.dir") + "/APIReport.html";
+            File reportFile = new File(reportPath);
 
-        extent = new ExtentReports();
-        extent.attachReporter(htmlReporter);
-        extent.setSystemInfo("Environment", "Local");
-        extent.setSystemInfo("Tester", "Automation Team");
+            if (reportFile.exists()) {
+                if (!reportFile.delete()) {
+                    System.err.println("⚠️ Failed to delete existing report file.");
+                }
+            }
+
+            ExtentHtmlReporter htmlReporter = new ExtentHtmlReporter(reportPath);
+            htmlReporter.config().setDocumentTitle("API Test Report");
+            htmlReporter.config().setReportName("API Message Processing");
+            htmlReporter.config().setTheme(Theme.STANDARD);
+
+            extent = new ExtentReports();
+            extent.attachReporter(htmlReporter);
+            extent.setSystemInfo("Environment", "Local");
+            extent.setSystemInfo("Tester", "Automation Team");
+
+            System.out.println("📄 Report path set to: " + reportPath);
+        } catch (Exception e) {
+            System.err.println("❌ Failed to initialize ExtentReports: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public String buildUrlWithParams(String baseUrl, Map<String, String> params) {
