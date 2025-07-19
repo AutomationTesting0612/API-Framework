@@ -71,7 +71,7 @@
         <dependency>
             <groupId>com.aventstack</groupId>
             <artifactId>extentreports</artifactId>
-            <version>5.1.2</version>
+            <version>3.1.2</version>
             <exclusions>
                 <exclusion>
                     <artifactId>httpclient</artifactId>

@@ -6,7 +6,7 @@ import com.api.framework.testing.model.DataSet;
 import com.api.framework.testing.model.ScenarioMain;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
-import com.aventstack.extentreports.reporter.ExtentSparkReporter;
+import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
 import com.aventstack.extentreports.reporter.configuration.Theme;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -206,19 +206,29 @@ public class Consumer {
                     System.err.println("⚠️ Failed to delete existing report file.");
                 }
             }
+            ExtentHtmlReporter htmlReporter = new ExtentHtmlReporter(reportPath);
 
-            ExtentSparkReporter htmlReporter = new ExtentSparkReporter(reportPath);
-            htmlReporter.config().setDocumentTitle("API Test Report");
-            htmlReporter.config().setReportName("API Message Processing");
-            htmlReporter.config().setTheme(Theme.STANDARD);
+            // Beautify the report
+            htmlReporter.config().setDocumentTitle("🚀 API Test Report");
+            htmlReporter.config().setReportName("🧪 API Message Processing Suite");
+            htmlReporter.config().setTheme(Theme.STANDARD); // Only STANDARD and DARK available in 3.1.3
+            htmlReporter.config().setEncoding("utf-8");
+            htmlReporter.config().setChartVisibilityOnOpen(true);
+            htmlReporter.config().setTestViewChartLocation(
+                    com.aventstack.extentreports.reporter.configuration.ChartLocation.TOP
+            );
 
             extent = new ExtentReports();
             extent.attachReporter(htmlReporter);
-            extent.setSystemInfo("Environment", "Local");
-            extent.setSystemInfo("Tester", "Automation Team");
+
+            // System info
+            extent.setSystemInfo("🌍 Environment", "Local");
+            extent.setSystemInfo("👨‍💻 Tester", "Automation Team");
+            extent.setSystemInfo("📅 Date", java.time.LocalDate.now().toString());
+            extent.setSystemInfo("⏱ Time", java.time.LocalTime.now().toString());
 
             System.out.println("📄 Report path set to: " + reportPath);
-        } catch (Exception e) {
+           } catch (Exception e) {
             System.err.println("❌ Failed to initialize ExtentReports: " + e.getMessage());
             e.printStackTrace();
         }
@@ -297,17 +307,6 @@ public class Consumer {
     public void init() {
         setupExtentReports();
         customizeRestTemplate();
-//        restTemplate.setErrorHandler(new ResponseErrorHandler() {
-//            @Override
-//            public boolean hasError(ClientHttpResponse response) {
-//                return false; // Don't treat any response as error
-//            }
-//
-//            @Override
-//            public void handleError(ClientHttpResponse response) {
-//                // No-op
-//            }
-//        });
 
 
     }
