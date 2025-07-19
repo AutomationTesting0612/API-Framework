@@ -43,6 +43,7 @@ public class Consumer {
 
     private ExtentReports extent;
     private ExtentTest test;
+    private ThreadLocal<ExtentTest> testThread = new ThreadLocal<>();
 
     private List<ScenarioMain> scenario;
     private String featureName = "Unknown Feature";
@@ -79,8 +80,6 @@ public class Consumer {
                 ScenarioMain single = objectMapper.readValue(trimmed, ScenarioMain.class);
                 allScenarios = Collections.singletonList(single);
             }
-
-            setupExtentReports(); // Initialize only once
 //            ExecutorService executor = Executors.newFixedThreadPool(threadCount);
             for (ScenarioMain scenario : allScenarios) {
                 if (scenario.getData_list() == null || scenario.getData_list().isEmpty()) {
@@ -91,7 +90,9 @@ public class Consumer {
 
             }
             ack.acknowledge();
-            extent.flush(); // Flush only once after all scenarios
+            synchronized (this) {
+                extent.flush();
+            } // Flush only once after all scenarios
             generateAndSendReport(allScenarios); // Pass list of all scenarios
 
 
@@ -126,6 +127,7 @@ public class Consumer {
                 ExtentTest test = extent.createTest("Feature: " + featureName + " [" + operationType + "]")
                         .assignCategory("API Testing")
                         .assignAuthor("Automation Team");
+                testThread.set(test);
 
                 try {
                     Map<String, Object> requestBody = dataset.getRequest_body() != null && !dataset.getRequest_body().isEmpty()
@@ -242,7 +244,9 @@ public class Consumer {
 
     private boolean compareOnlyExpectedFields(JsonNode expectedNode, JsonNode actualNode) {
         mismatches = compareExpectedFieldsDeeply(expectedNode, actualNode, "");
-        return mismatches.isEmpty(); // Return true only if no mismatches
+        ExtentTest test = testThread.get();
+        mismatches.forEach(m -> test.warning("Mismatch: " + m));
+        return mismatches.isEmpty();
     }
 
     private List<String> compareExpectedFieldsDeeply(JsonNode expected, JsonNode actual, String path) {
@@ -282,19 +286,29 @@ public class Consumer {
     }
 
     @PostConstruct
-    public void customizeRestTemplate() {
-        restTemplate.setErrorHandler(new ResponseErrorHandler() {
-            @Override
-            public boolean hasError(ClientHttpResponse response) {
-                return false; // Don't treat any response as error
-            }
-
-            @Override
-            public void handleError(ClientHttpResponse response) {
-                // No-op
-            }
-        });
+    public void init() {
+        setupExtentReports();
+        customizeRestTemplate();
+//        restTemplate.setErrorHandler(new ResponseErrorHandler() {
+//            @Override
+//            public boolean hasError(ClientHttpResponse response) {
+//                return false; // Don't treat any response as error
+//            }
+//
+//            @Override
+//            public void handleError(ClientHttpResponse response) {
+//                // No-op
+//            }
+//        });
 
 
     }
+
+    private void customizeRestTemplate() {
+        restTemplate.setErrorHandler(new ResponseErrorHandler() {
+            @Override public boolean hasError(ClientHttpResponse response) { return false; }
+            @Override public void handleError(ClientHttpResponse response) {}
+        });
+    }
+
 }
