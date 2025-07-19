@@ -37,6 +37,7 @@ mvn clean test
 # Optional: Cleanup
 sleep 40s
 ls -ltr
+head -n 40 APIReport.html
 kill $pid4 || true
 
 
