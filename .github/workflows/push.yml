@@ -61,14 +61,8 @@ jobs:
 
       - name: Start Spring Boot app in background
         run: |
-          nohup java -jar ${{ github.workspace }}/target/ApiFramwork-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
-          echo "App started"
-          sleep 20
-
-      - name: run the cucumber
-        run: |
-          mvn clean verify
-          sleep 30
+          chmod +x *
+          ./run_cucumber.sh ${{ github.workspace }}
 
       - name: Upload API Report
         uses: actions/upload-artifact@v4
