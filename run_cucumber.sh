@@ -1,6 +1,6 @@
 #!/bin/bash
 
-WORKSPACE=C:/Documents/ApiFramwork
+WORKSPACE=$1
 PORT=8096
 
 # Start Spring Boot app
