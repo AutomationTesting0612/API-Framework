@@ -6,7 +6,7 @@ PORT=8096
 # Start Spring Boot app
 java -Dserver.port=$PORT -jar "$WORKSPACE"/target/ApiFramwork-0.0.1-SNAPSHOT.jar > "$WORKSPACE"/common.out & pid4=$!
 echo "Spring Boot PID: ${pid4}"
-
+sleep 20s
 # Wait for app to start (max 60s wait)
 echo "Waiting for application to be healthy..."
 for i in {1..12}; do
