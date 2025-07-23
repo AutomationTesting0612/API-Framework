@@ -53,7 +53,7 @@ public class ScenarioGenerator {
                 if (operation.getRequestBody() != null) {
                     schema = extractSchema(operation.getRequestBody(), openAPI);
                     if (schema != null) {
-                        requestBody = generateSampleRequest(schema, openAPI);
+                        requestBody = generateSampleRequest(schema, openAPI, new HashSet<>());
                     }
                 }
 
@@ -177,23 +177,30 @@ public class ScenarioGenerator {
         return null;
     }
 
-    private Map<String, Object> generateSampleRequest(Schema<?> schema, OpenAPI openAPI) {
+    private Map<String, Object> generateSampleRequest(Schema<?> schema, OpenAPI openAPI, Set<String> visitedRefs) {
         Map<String, Object> sample = new HashMap<>();
         schema = resolveSchema(schema, openAPI);
-        // ✅ Use object-level example if present
+
+        if (schema.get$ref() != null) {
+            String refName = schema.get$ref().replace("#/components/schemas/", "");
+            if (visitedRefs.contains(refName)) {
+                return Map.of("ref", "circular_" + refName); // avoid loop
+            }
+            visitedRefs.add(refName);
+        }
+
         if (schema.getExample() != null) {
             try {
                 return mapper.convertValue(schema.getExample(), new TypeReference<Map<String, Object>>() {});
             } catch (IllegalArgumentException e) {
-                System.err.println("⚠️ Failed to convert example to Map: " + e.getMessage());
-                // fallback to property generation
+                // fallback
             }
         }
 
         if (schema.getProperties() != null) {
             schema.getProperties().forEach((key, value) -> {
                 Schema<?> prop = resolveSchema((Schema<?>) value, openAPI);
-                Object val = generateValueForSchema(prop, openAPI);
+                Object val = generateValueForSchema(prop, openAPI, visitedRefs);
                 sample.put(key, val);
             });
         }
@@ -202,25 +209,21 @@ public class ScenarioGenerator {
     }
 
     // generateValueForSchema
-    private Object generateValueForSchema(Schema<?> schema, OpenAPI openAPI) {
-        schema = resolveSchema(schema, openAPI);
+    private Object generateValueForSchema(Schema<?> schema, OpenAPI openAPI, Set<String> visitedRefs) {
+        schema = resolveSchemaRecursive(schema, openAPI, visitedRefs);
         if (schema == null) return "unknown";
 
-        // ✅ Prefer example
         if (schema.getExample() != null) return schema.getExample();
 
-        // ✅ Enum fallback
         if (schema.getEnum() != null && !schema.getEnum().isEmpty()) return schema.getEnum().get(0);
 
-        // ✅ Type resolution
         String type = schema.getType();
         if (type == null) {
-            // Guess fallback type
             if (schema.getProperties() != null) {
-                return generateSampleRequest(schema, openAPI);
+                return generateSampleRequest(schema, openAPI, visitedRefs);
             } else if (schema.getItems() != null) {
-                Schema<?> itemSchema = resolveSchema(schema.getItems(), openAPI);
-                Object item = generateValueForSchema(itemSchema, openAPI);
+                Schema<?> itemSchema = resolveSchemaRecursive(schema.getItems(), openAPI, visitedRefs);
+                Object item = generateValueForSchema(itemSchema, openAPI, visitedRefs);
                 return List.of(item);
             } else {
                 return "unknown";
@@ -232,16 +235,17 @@ public class ScenarioGenerator {
             case "integer" -> 123;
             case "boolean" -> true;
             case "number" -> 99.99;
-            case "object" -> generateSampleRequest(schema, openAPI);
+            case "object" -> generateSampleRequest(schema, openAPI, visitedRefs);
             case "array" -> {
-                Schema<?> itemSchema = schema.getItems();
-                itemSchema = resolveSchema(itemSchema, openAPI);
-                Object item = generateValueForSchema(itemSchema, openAPI);
+                Schema<?> itemSchema = resolveSchemaRecursive(schema.getItems(), openAPI, visitedRefs);
+                Object item = generateValueForSchema(itemSchema, openAPI, visitedRefs);
                 yield List.of(item);
             }
             default -> "unknown";
         };
     }
+
+
 
     private Schema<?> resolveSchema(Schema<?> schema, OpenAPI openAPI) {
         Set<String> visitedRefs = new HashSet<>();
@@ -309,7 +313,7 @@ public class ScenarioGenerator {
                 copy.remove(requiredField);
 
                 String errorStatus = "400";
-                Map<String, Object> errorResponse = getResponseExample(operation, errorStatus, openAPI);
+                Map<String, Object> errorResponse = getResponseExample(operation, errorStatus, openAPI );
 
                 Map<String, Object> testCase = new HashMap<>();
                 testCase.put("request_body", copy);
@@ -326,18 +330,26 @@ public class ScenarioGenerator {
     }
 
     private Map<String, Object> getResponseExample(Operation operation, String statusCode, OpenAPI openAPI) {
+        Set<String> visitedRefs = new HashSet<>();
         if (operation.getResponses() == null || !operation.getResponses().containsKey(statusCode)) {
             System.out.println("❌ No response for status: " + statusCode);
             return Map.of();
         }
 
         var response = operation.getResponses().get(statusCode);
-        if (response.getContent() == null || !response.getContent().containsKey("application/json")) {
-            System.out.println("❌ No application/json content for response");
+        if (response.getContent() == null || response.getContent().isEmpty()) {
+            System.out.println("❌ No content in response");
             return Map.of();
         }
 
-        var mediaType = response.getContent().get("application/json");
+        var contentMap = response.getContent();
+
+// Prefer application/json, else fallback to any available content
+        var mediaType = contentMap.get("application/json");
+        if (mediaType == null) {
+            mediaType = contentMap.values().iterator().next();
+            System.out.println("⚠️ Falling back to non-standard content type");
+        }
 
         if (mediaType.getExample() != null) {
             try {
@@ -360,7 +372,7 @@ public class ScenarioGenerator {
 
         var schema = mediaType.getSchema();
         if (schema != null) {
-            Schema<?> resolvedSchema = resolveSchema(schema, openAPI);
+            Schema<?> resolvedSchema = resolveSchemaRecursive(schema, openAPI, visitedRefs);
             if (resolvedSchema != null && resolvedSchema.getExample() != null) {
                 try {
                     return mapper.convertValue(resolvedSchema.getExample(), new TypeReference<>() {});
@@ -370,7 +382,7 @@ public class ScenarioGenerator {
             }
 
             // fallback to generating response
-            Map<String, Object> fallback = generateSampleResponseFromSchema(resolvedSchema, openAPI);
+            Map<String, Object> fallback = generateSampleResponseFromSchema(resolvedSchema, openAPI,visitedRefs);
             System.out.println("🧩 Generated fallback desired_outcome: " + fallback);
             return fallback;
         }
@@ -379,14 +391,12 @@ public class ScenarioGenerator {
         return Map.of();
     }
 
-    private Map<String, Object> generateSampleResponseFromSchema(Schema<?> schema, OpenAPI openAPI) {
-        schema = resolveSchema(schema, openAPI);
-
+    private Map<String, Object> generateSampleResponseFromSchema(Schema<?> schema, OpenAPI openAPI, Set<String> visitedRefs) {
+        schema = resolveSchemaRecursive(schema, openAPI, visitedRefs);
         if (schema == null) {
             return Map.of("message", "No schema available");
         }
 
-        // Try schema-level example first
         if (schema.getExample() != null) {
             try {
                 Object example = schema.getExample();
@@ -396,31 +406,30 @@ public class ScenarioGenerator {
             }
         }
 
-        // Handle objects with properties
-        if ("object".equals(schema.getType()) && schema.getProperties() != null && !schema.getProperties().isEmpty()) {
+        if ("object".equals(schema.getType()) && schema.getProperties() != null) {
             Map<String, Object> response = new HashMap<>();
-            schema.getProperties().forEach((key, propSchemaObj) -> {
-                Schema<?> propSchema = resolveSchema((Schema<?>) propSchemaObj, openAPI);
-                Object sampleValue = generateValueForSchema(propSchema, openAPI);
-                response.put(key, sampleValue);
-            });
+            for (Map.Entry<String, Schema> entry : (Set<Map.Entry<String, Schema>>) schema.getProperties().entrySet()) {
+                Schema<?> propSchema = resolveSchemaRecursive(entry.getValue(), openAPI, visitedRefs);
+                Object sampleValue = generateValueForSchema(propSchema, openAPI, visitedRefs);
+                response.put(entry.getKey(), sampleValue);
+            }
             return response;
         }
 
-        // Handle arrays
         if ("array".equals(schema.getType()) && schema.getItems() != null) {
-            Object item = generateValueForSchema(schema.getItems(), openAPI);
+            Schema<?> itemSchema = resolveSchemaRecursive(schema.getItems(), openAPI, visitedRefs);
+            Object item = generateValueForSchema(itemSchema, openAPI, visitedRefs);
             return Map.of("value", List.of(item));
         }
 
-        // Handle primitives
         if (schema.getType() != null) {
-            Object value = generateValueForSchema(schema, openAPI);
+            Object value = generateValueForSchema(schema, openAPI, visitedRefs);
             return Map.of("value", value);
         }
 
         return Map.of("message", "No example or properties defined in schema");
     }
+
 
 
 
