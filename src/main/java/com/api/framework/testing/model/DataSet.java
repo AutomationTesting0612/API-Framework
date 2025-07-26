@@ -14,15 +14,32 @@ public class DataSet {
     private JsonNode desired_outcome;
     private String desired_status;
     private Authorization authorization;
-    private Map<String,String> params;
+    private Map<String, Object> path_variable;
+    private Map<String, Object> query_param;
+    private DynamicKeyStore dynamic_keystore;
 
-
-    public Map<String, String> getParams() {
-        return params;
+    public Map<String, Object> getQuery_param() {
+        return query_param;
     }
 
-    public void setParams(Map<String, String> params) {
-        this.params = params;
+    public void setQuery_param(Map<String, Object> query_param) {
+        this.query_param = query_param;
+    }
+
+    public Map<String, Object> getPath_variable() {
+        return path_variable;
+    }
+
+    public void setPath_variable(Map<String, Object> path_variable) {
+        this.path_variable = path_variable;
+    }
+
+    public DynamicKeyStore getDynamic_keystore() {
+        return dynamic_keystore;
+    }
+
+    public void setDynamic_keystore(DynamicKeyStore dynamic_keystore) {
+        this.dynamic_keystore = dynamic_keystore;
     }
 
 

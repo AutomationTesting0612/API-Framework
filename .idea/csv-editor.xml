@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CsvFileAttributes">
+    <option name="attributeMap">
+      <map>
+        <entry key="C:\Ruby27-x64\lib\ruby\gems\2.7.0\gems\capybara-3.37.1\spec\fixtures\capybara.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="C:\Ruby27-x64\lib\ruby\gems\2.7.0\gems\regexp_parser-2.6.0\lib\regexp_parser\scanner\properties\long.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="C:\Ruby27-x64\lib\ruby\gems\2.7.0\gems\regexp_parser-2.6.0\lib\regexp_parser\scanner\properties\short.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="C:\Ruby27-x64\lib\ruby\gems\2.7.0\gems\test-unit-3.3.4\test\fixtures\header-label.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="C:\Ruby27-x64\lib\ruby\gems\2.7.0\gems\test-unit-3.3.4\test\fixtures\header.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="C:\Ruby27-x64\lib\ruby\gems\2.7.0\gems\test-unit-3.3.4\test\fixtures\no-header.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="C:\Ruby27-x64\lib\ruby\gems\2.7.0\gems\test-unit-3.3.4\test\fixtures\plus.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

@@ -1,0 +1,169 @@
+{
+  "data_list": [
+    {
+      "baseUrl": "http://localhost:8095",
+      "endpoint": "/employees",
+      "scenario": {
+        "name": "Add a new employee With POST",
+        "description": "Generated from Swagger",
+        "datasets": [
+          {
+            "dynamic_keystore": {
+              "keys": ["id"]
+            },
+            "desired_status": "201",
+            "desired_outcome": {
+              "address": "sample_string",
+              "name": "sample_string",
+              "age": "sample_string",
+              "id": "{id}"
+            },
+            "request_body": {
+              "address": "sample_string",
+              "name": "sample_string",
+              "age": "sample_string"
+            }
+          }
+        ]
+      },
+      "mappingType": "POST",
+      "header": {
+        "content-Type": "application/json"
+      }
+    },
+    {
+      "baseUrl": "http://localhost:8095",
+      "endpoint": "/put/employees",
+      "scenario": {
+        "name": "update new employee With PUT",
+        "description": "Generated from Swagger",
+        "datasets": [
+          {
+            "dynamic_keystore": null,
+            "desired_status": "200",
+            "desired_outcome": {
+              "address": "sample_string",
+              "name": "sample_string",
+              "id": "{id}",
+              "age": "sample_string"
+            },
+            "request_body": {
+              "id": "{id}",
+              "address": "sample_string",
+              "name": "sample_string",
+              "age": "sample_string"
+            }
+          }
+        ]
+      },
+      "mappingType": "PUT",
+      "header": {
+        "content-Type": "application/json"
+      }
+    },
+    {
+      "baseUrl": "http://localhost:8095",
+      "endpoint": "/get/employees",
+      "scenario": {
+        "name": "Get a new employee wih all variable",
+        "description": "Generated from Swagger",
+        "datasets": [
+          {
+            "query_param": null,
+            "dynamic_keystore": null,
+            "desired_status": "200",
+            "desired_outcome": [{
+              "address": "sample_string",
+              "name": "sample_string",
+              "age": "sample_string",
+              "id": "{id}"
+            }],
+            "request_body": null
+          }
+        ]
+      },
+      "mappingType": "GET",
+      "header": {
+        "content-Type": "application/json"
+      }
+    },
+    {
+      "baseUrl": "http://localhost:8095",
+      "endpoint": "/get/employees/{id}",
+      "scenario": {
+        "name": "Get a new employee",
+        "description": "Generated from Swagger with PATH VAriable",
+        "datasets": [
+          {
+            "dynamic_keystore": null,
+            "path_variable": {
+              "id": 1
+            },
+            "desired_status": "200",
+            "desired_outcome": {
+              "address": "sample_string",
+              "name": "sample_string",
+              "age": "sample_string"
+            },
+            "request_body": null
+          }
+        ]
+      },
+      "mappingType": "GET",
+      "header": {
+        "content-Type": "application/json"
+      }
+    },
+    {
+      "baseUrl": "http://localhost:8095",
+      "endpoint": "/get/query/employees",
+      "scenario": {
+        "name": "Get a new employee with query param",
+        "description": "Generated from Swagger",
+        "datasets": [
+          {
+            "dynamic_keystore": null,
+            "query_param": {
+              "id": 1
+            },
+            "desired_status": "200",
+            "desired_outcome": {
+              "address": "sample_string",
+              "name": "sample_string",
+              "age": "sample_string"
+            },
+            "request_body": null
+          }
+        ]
+      },
+      "mappingType": "GET",
+      "header": {
+        "content-Type": "application/json"
+      }
+    },
+    {
+      "baseUrl": "http://localhost:8095",
+      "endpoint": "/delete/employees/{id}",
+      "scenario": {
+        "name": "Delete a new employee with query param",
+        "description": "Generated from Swagger",
+        "datasets": [
+          {
+            "dynamic_keystore": null,
+            "path_variable": {
+              "id": 1
+            },
+            "desired_status": "200",
+            "desired_outcome": null,
+            "request_body": null
+          }
+        ]
+      },
+      "mappingType": "DELETE",
+      "header": {
+        "content-Type": "application/json"
+      }
+    }
+  ],
+  "report": null
+}

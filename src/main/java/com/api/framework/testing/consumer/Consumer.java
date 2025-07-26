@@ -1,9 +1,7 @@
 package com.api.framework.testing.consumer;
 
 
-import com.api.framework.testing.model.DataList;
-import com.api.framework.testing.model.DataSet;
-import com.api.framework.testing.model.ScenarioMain;
+import com.api.framework.testing.model.*;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.reporter.ExtentHtmlReporter;
@@ -12,6 +10,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -116,11 +115,6 @@ public class Consumer {
             if (header != null) {
                 header.forEach(headers::set);
             }
-//                synchronized (this) {
-//            test = extent.createTest("Feature: " + featureName)
-//                    .assignCategory("API Testing")
-//                    .assignAuthor("Automation Team");
-//                }
 
             List<DataSet> datasets = dataList.getScenario().getDatasets();
             for (DataSet dataset : datasets) {
@@ -130,15 +124,29 @@ public class Consumer {
                 testThread.set(test);
 
                 try {
-                    Map<String, Object> requestBody = dataset.getRequest_body() != null && !dataset.getRequest_body().isEmpty()
-                            ? dataset.getRequest_body()
-                            : null;
+                    Map<String, Object> requestBody;
+                    if (!operationType.equals("POST")) {
+
+                         requestBody = dataset.getRequest_body() != null && !dataset.getRequest_body().isEmpty()
+                                ? (Map<String, Object>) resolvePlaceholdersInObject(dataset.getRequest_body())
+                                : null;
+                    } else {
+                         requestBody = dataset.getRequest_body() != null && !dataset.getRequest_body().isEmpty()
+                                ? dataset.getRequest_body()
+                                : null;
+                    }
                     HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
                     String expectedStatus = dataset.getDesired_status() != null ? dataset.getDesired_status() : "";
                     String endpoint = dataList.getBase_url() + dataList.getEndPoint();
+                    if (!operationType.equals("POST")) {
 
-                    if (dataset.getParams() != null) {
-                        endpoint = buildUrlWithParams(endpoint, dataset.getParams());
+                    if (dataset.getPath_variable() != null && dataset.getQuery_param() != null) {
+                        endpoint = resolveEndpointWithQueryAndPathVariable(endpoint, dataset); // Original static params
+                    } else if (dataset.getPath_variable() != null) {
+                        endpoint = resolveEndpointWithPathVariable(endpoint, dataset);
+                    } else if(dataset.getQuery_param() != null) {
+                        endpoint = resolveEndpointWithQueryParam(endpoint, dataset);
+                    }
                     }
 
                     test.info("📌 Endpoint: " + endpoint);
@@ -149,13 +157,16 @@ public class Consumer {
 
                     JsonNode expectedRoot = dataset.getDesired_outcome();
                     JsonNode actualNode = objectMapper.readTree(response.getBody());
-
+                    if (operationType.equals("POST")) {
+                        populateDynamicKeysFromResponse(dataset, actualNode);
+                    }
+                    JsonNode finalExpectedResponse = extractActualData(actualNode, expectedRoot);
                     boolean isEqual = true;
                     if (expectedRoot.isObject()) {
-                        isEqual = compareOnlyExpectedFields(expectedRoot, actualNode);
+                        isEqual = compareOnlyExpectedFields(finalExpectedResponse, actualNode);
                     } else if (expectedRoot.isArray()) {
                         for (JsonNode expectedNode : expectedRoot) {
-                            isEqual = compareOnlyExpectedFields(expectedNode, actualNode);
+                            isEqual = compareOnlyExpectedFields(finalExpectedResponse, actualNode);
                             if (!isEqual) break;
                         }
                     }
@@ -234,16 +245,89 @@ public class Consumer {
         }
     }
 
-    public String buildUrlWithParams(String baseUrl, Map<String, String> params) {
+    public String resolveEndpointWithQueryAndPathVariable(String baseEndpoint, DataSet dataSet) {
+        // Step 1: Collect all parameters
+        Map<String, Object> allParams = new HashMap<>();
+
+        if (dataSet.getPath_variable() != null) {
+            allParams.putAll(dataSet.getPath_variable()); // from YAML or static config
+        }
+
+        Map<String, Object> dynamicParams = TestExecutionContext.getAll();
+        for (Map.Entry<String, Object> entry : dynamicParams.entrySet()) {
+            if (entry.getValue() != null) {
+                allParams.put(entry.getKey(), entry.getValue().toString());
+            }
+        }
+
+        // Step 2: Replace path variables like {claim_id}
+        String resolvedPath = replacePathVariables(baseEndpoint, allParams);
+
+        // Step 3: Append remaining as query parameters
+        return buildUrlWithParams(resolvedPath, allParams);
+    }
+
+    public String resolveEndpointWithPathVariable(String baseEndpoint, DataSet dataSet) {
+        // Step 1: Collect all parameters
+        Map<String, Object> allParams = new HashMap<>();
+
+        if (dataSet.getPath_variable() != null) {
+            allParams.putAll(dataSet.getPath_variable()); // from YAML or static config
+        }
+
+        Map<String, Object> dynamicParams = TestExecutionContext.getAll();
+        for (Map.Entry<String, Object> entry : dynamicParams.entrySet()) {
+            if (entry.getValue() != null) {
+                allParams.put(entry.getKey(), entry.getValue().toString());
+            }
+        }
+
+        // Step 2: Replace path variables like {claim_id}
+        return replacePathVariables(baseEndpoint, allParams);
+
+    }
+
+    public String resolveEndpointWithQueryParam(String baseEndpoint, DataSet dataSet) {
+        // Step 1: Collect all parameters
+        Map<String, Object> allParams = new HashMap<>();
+
+        if (dataSet.getQuery_param() != null) {
+            allParams.putAll(dataSet.getQuery_param()); // from YAML or static config
+        }
+
+        Map<String, Object> dynamicParams = TestExecutionContext.getAll();
+        for (Map.Entry<String, Object> entry : dynamicParams.entrySet()) {
+            if (entry.getValue() != null) {
+                allParams.put(entry.getKey(), entry.getValue().toString());
+            }
+        }
+
+        // Step 2: Replace path variables like {claim_id}
+        return buildUrlWithParams(baseEndpoint, allParams);
+
+    }
+
+
+    private String replacePathVariables(String url, Map<String, Object> params) {
+        for (Map.Entry<String, Object> entry : params.entrySet()) {
+            String placeholder = "{" + entry.getKey() + "}";
+            if (url.contains(placeholder)) {
+                url = url.replace(placeholder, URLEncoder.encode((String) entry.getValue(), StandardCharsets.UTF_8));
+            }
+        }
+        return url;
+    }
+
+    public String buildUrlWithParams(String baseUrl, Map<String, Object> params) {
         StringBuilder urlBuilder = new StringBuilder(baseUrl);
 
         boolean firstParam = !baseUrl.contains("?");
 
-        for (Map.Entry<String, String> entry : params.entrySet()) {
+        for (Map.Entry<String, Object> entry : params.entrySet()) {
             String key = entry.getKey();
-            String value = entry.getValue();
+            Object value = entry.getValue();
 
-            if (value != null && !value.isEmpty()) {
+            if (value != null && !value.equals("empty")) {
                 if (firstParam) {
                     urlBuilder.append("?");
                     firstParam = false;
@@ -253,7 +337,7 @@ public class Consumer {
 
                 urlBuilder.append(URLEncoder.encode(key, StandardCharsets.UTF_8));
                 urlBuilder.append("=");
-                urlBuilder.append(URLEncoder.encode(value, StandardCharsets.UTF_8));
+                urlBuilder.append(URLEncoder.encode((String) value, StandardCharsets.UTF_8));
             }
         }
 
@@ -317,5 +401,88 @@ public class Consumer {
             @Override public void handleError(ClientHttpResponse response) {}
         });
     }
+
+    public void populateDynamicKeysFromResponse(DataSet dataSet, JsonNode responseJson) {
+        Map<String, Object> keyValueMap = new HashMap<>();
+
+        DynamicKeyStore dynamicKeyStore = dataSet.getDynamic_keystore();
+        if (dynamicKeyStore != null && dynamicKeyStore.getKeys() != null) {
+            for (String key : dynamicKeyStore.getKeys()) {
+                JsonNode valueNode = responseJson.at("/" + key); // Supports flat paths
+                if (!valueNode.isMissingNode() && !valueNode.isNull()) {
+                    Object value = extractValue(valueNode);
+                    dynamicKeyStore.addValue(key, value);
+                    keyValueMap.put(key, value);
+                    TestExecutionContext.put(key, value);
+                }
+            }
+        }
+    }
+
+    private Object extractValue(JsonNode node) {
+        if (node.isTextual()) {
+            return node.textValue();
+        } else if (node.isNumber()) {
+            return node.numberValue();
+        } else if (node.isBoolean()) {
+            return node.booleanValue();
+        } else if (node.isArray() || node.isObject()) {
+            return node; // return the JsonNode itself for complex types
+        } else {
+            return node.toString(); // fallback
+        }
+    }
+    @SuppressWarnings("unchecked")
+    public Object resolvePlaceholdersInObject(Object input) {
+        if (input instanceof Map<?, ?> mapInput) {
+            Map<String, Object> resolvedMap = new HashMap<>();
+            for (Map.Entry<?, ?> entry : mapInput.entrySet()) {
+                String key = entry.getKey().toString();
+                Object value = resolvePlaceholdersInObject(entry.getValue());
+                resolvedMap.put(key, value);
+            }
+            return resolvedMap;
+        } else if (input instanceof List<?> listInput) {
+            return listInput.stream()
+                    .map(this::resolvePlaceholdersInObject)
+                    .collect(Collectors.toList());
+        } else if (input instanceof String strInput) {
+            return resolveDynamicPlaceholder(strInput);
+        }
+        return input;
+    }
+    private String resolveDynamicPlaceholder(String value) {
+        if (value.startsWith("{") && value.endsWith("}")) {
+            String key = value.substring(1, value.length() - 1);
+            Object dynamicValue = TestExecutionContext.get(key);
+            return dynamicValue != null ? dynamicValue.toString() : value;
+        }
+        return value;
+    }
+
+    private JsonNode extractActualData(JsonNode actualNode, JsonNode desiredOutcome) {
+        ObjectNode resultNode = objectMapper.createObjectNode();
+
+        desiredOutcome.fields().forEachRemaining(entry -> {
+            String key = entry.getKey();
+            JsonNode expectedValue = entry.getValue();
+            JsonNode actualValue = actualNode.get(key);
+
+            if (expectedValue.isObject() && actualValue != null && actualValue.isObject()) {
+                // Recurse into nested object
+                resultNode.set(key, extractActualData(actualValue, expectedValue));
+            } else if (expectedValue.isTextual() && expectedValue.asText().matches("^\\{.*}$")) {
+                // Replace placeholder like "{id}" with actual value
+                resultNode.set(key, actualValue != null ? actualValue : objectMapper.nullNode());
+            } else {
+                // Copy the value as-is from desiredOutcome (static expected value)
+                resultNode.set(key, expectedValue);
+            }
+        });
+
+        return resultNode;
+    }
+
+
 
 }
