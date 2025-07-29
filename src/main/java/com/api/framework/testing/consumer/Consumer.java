@@ -69,6 +69,7 @@ public class Consumer {
         List<ScenarioMain> allScenarios;
 
         try {
+
             String trimmed = message.stream()
                     .collect(Collectors.joining())
                     .trim();
@@ -165,8 +166,8 @@ public class Consumer {
                     if (expectedRoot.isObject()) {
                         isEqual = compareOnlyExpectedFields(finalExpectedResponse, actualNode);
                     } else if (expectedRoot.isArray()) {
-                        for (JsonNode expectedNode : expectedRoot) {
-                            isEqual = compareOnlyExpectedFields(finalExpectedResponse, actualNode);
+                        for (JsonNode expectedNode : finalExpectedResponse) {
+                            isEqual = compareOnlyExpectedFields(expectedNode, actualNode);
                             if (!isEqual) break;
                         }
                     }

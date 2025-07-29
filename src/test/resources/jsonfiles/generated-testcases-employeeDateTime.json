@@ -154,7 +154,10 @@
               "id": 1
             },
             "desired_status": "200",
-            "desired_outcome": null,
+            "desired_outcome": {
+              "status": "success",
+              "deletedId": "{id}"
+            },
             "request_body": null
           }
         ]

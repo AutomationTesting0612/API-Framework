@@ -22,15 +22,10 @@ import static com.fasterxml.jackson.databind.type.LogicalType.DateTime;
 @Service
 public class ScenarioGenerator {
 
-    @Value("${swagger.url}")
-    private String swaggerUrl;
-
-    @Value("${app.url}")
-    private String applicationUrl;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public Map<String, Object> generate() throws Exception {
+    public Map<String, Object> generate(String swaggerUrl, String applicationUrl) throws Exception {
         SwaggerParseResult parseResult = new OpenAPIV3Parser().readLocation(swaggerUrl, null, null);
         OpenAPI openAPI = parseResult.getOpenAPI();
 
