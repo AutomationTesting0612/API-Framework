@@ -74,6 +74,23 @@
         <button type="submit">Generate from Document</button>
     </form>
 
+    <form method="post" enctype="multipart/form-data" action="/generate/testcases">
+        <label for="file">Upload Test Case File:</label>
+        <input type="file" id="file_1" name="file" required />
+        <button type="submit">Execute</button>
+    </form>
+
+</div>
+
+<!-- ✅ Success message + Download link -->
+<div th:if="${reportAvailable}" class="alert-success">
+    ✅ Execution Completed —
+    <a th:href="@{/generate/report/download}" class="btn">⬇️ Download Extent Report</a>
+</div>
+
+<!-- ❌ Error message -->
+<div th:if="${error}" class="alert-error">
+    <p th:text="${error}"></p>
 </div>
 </body>
 </html>

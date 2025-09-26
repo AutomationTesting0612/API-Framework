@@ -17,6 +17,9 @@
 <!-- Display full JSON -->
 <div th:if="${jsonOutput != null}">
     <pre th:text="${jsonOutput}"></pre>
+    <!-- Download link -->
+    <a th:href="@{/generate/download}" class="download-btn">⬇️ Download JSON</a>
+    <a th:href="@{/generate/form}" class="btn back-btn">⬅️ Back</a>
 </div>
 
 </body>
