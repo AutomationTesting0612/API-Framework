@@ -128,18 +128,18 @@ public class Consumer {
                     Map<String, Object> requestBody;
                     if (!operationType.equals("POST")) {
 
-                         requestBody = dataset.getRequest_body() != null && !dataset.getRequest_body().isEmpty()
+                        requestBody = dataset.getRequest_body() != null && !dataset.getRequest_body().isEmpty()
                                 ? (Map<String, Object>) resolvePlaceholdersInObject(dataset.getRequest_body())
                                 : null;
                     } else {
-                         requestBody = dataset.getRequest_body() != null && !dataset.getRequest_body().isEmpty()
+                        requestBody = dataset.getRequest_body() != null && !dataset.getRequest_body().isEmpty()
                                 ? dataset.getRequest_body()
                                 : null;
                     }
                     HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
                     String expectedStatus = dataset.getDesired_status() != null ? dataset.getDesired_status() : "";
                     String endpoint = dataList.getBase_url() + dataList.getEndPoint();
-                    if (!operationType.equals("POST")) {
+//                    if (operationType.equals("POST")) {
 
                     if (dataset.getPath_variable() != null && dataset.getQuery_param() != null) {
                         endpoint = resolveEndpointWithQueryAndPathVariable(endpoint, dataset); // Original static params
@@ -148,7 +148,7 @@ public class Consumer {
                     } else if(dataset.getQuery_param() != null) {
                         endpoint = resolveEndpointWithQueryParam(endpoint, dataset);
                     }
-                    }
+//                    }
 
                     test.info("📌 Endpoint: " + endpoint);
                     test.info("🔄 HTTP Method: " + method);
@@ -215,7 +215,7 @@ public class Consumer {
 
             if (reportFile.exists()) {
                 if (!reportFile.delete()) {
-                    System.err.println("⚠️ Failed to delete existing report file.");
+                    System.err.println("⚠ Failed to delete existing report file.");
                 }
             }
             ExtentHtmlReporter htmlReporter = new ExtentHtmlReporter(reportPath);
@@ -240,7 +240,7 @@ public class Consumer {
             extent.setSystemInfo("⏱ Time", java.time.LocalTime.now().toString());
 
             System.out.println("📄 Report path set to: " + reportPath);
-           } catch (Exception e) {
+        } catch (Exception e) {
             System.err.println("❌ Failed to initialize ExtentReports: " + e.getMessage());
             e.printStackTrace();
         }
@@ -272,13 +272,13 @@ public class Consumer {
         // Step 1: Collect all parameters
         Map<String, Object> allParams = new HashMap<>();
 
-        if (dataSet.getPath_variable() != null) {
+        if (dataSet.getPath_variable() != null ) {
             allParams.putAll(dataSet.getPath_variable()); // from YAML or static config
         }
 
         Map<String, Object> dynamicParams = TestExecutionContext.getAll();
         for (Map.Entry<String, Object> entry : dynamicParams.entrySet()) {
-            if (entry.getValue() != null) {
+            if (entry.getValue() != null && dataSet.getPath_variable() != null && dataSet.getPath_variable().containsKey(entry.getKey())) {
                 allParams.put(entry.getKey(), entry.getValue().toString());
             }
         }
@@ -292,14 +292,16 @@ public class Consumer {
         // Step 1: Collect all parameters
         Map<String, Object> allParams = new HashMap<>();
 
-        if (dataSet.getQuery_param() != null) {
-            allParams.putAll(dataSet.getQuery_param()); // from YAML or static config
-        }
+//        if (dataSet.getQuery_param() != null) {
+//            allParams.putAll(dataSet.getQuery_param()); // from YAML or static config
+//        }
 
         Map<String, Object> dynamicParams = TestExecutionContext.getAll();
         for (Map.Entry<String, Object> entry : dynamicParams.entrySet()) {
-            if (entry.getValue() != null) {
-                allParams.put(entry.getKey(), entry.getValue().toString());
+            if (entry.getValue() != null && dataSet.getQuery_param() != null &&
+                    dataSet.getQuery_param().values().stream().anyMatch(value -> Objects.equals(value, entry.getKey()))) {
+                String key = dataSet.getQuery_param().keySet().iterator().next();
+                allParams.put(key, entry.getValue().toString());
             }
         }
 
@@ -403,13 +405,21 @@ public class Consumer {
         });
     }
 
+    public JsonNode getValueFromPath(JsonNode node, String path) {
+        String[] parts = path.split("\\.");
+        for (String part : parts) {
+            if (node != null) node = node.path(part);
+        }
+        return node;
+    }
+
     public void populateDynamicKeysFromResponse(DataSet dataSet, JsonNode responseJson) {
         Map<String, Object> keyValueMap = new HashMap<>();
 
         DynamicKeyStore dynamicKeyStore = dataSet.getDynamic_keystore();
         if (dynamicKeyStore != null && dynamicKeyStore.getKeys() != null) {
             for (String key : dynamicKeyStore.getKeys()) {
-                JsonNode valueNode = responseJson.at("/" + key); // Supports flat paths
+                JsonNode valueNode = getValueFromPath(responseJson, key); // Supports flat paths
                 if (!valueNode.isMissingNode() && !valueNode.isNull()) {
                     Object value = extractValue(valueNode);
                     dynamicKeyStore.addValue(key, value);
@@ -482,7 +492,7 @@ public class Consumer {
         });
 
         return resultNode;
-    }
+ }
 
 
 

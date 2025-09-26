@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Generated Test Cases</title>
+    <style>
+        body { font-family: monospace; margin: 24px; white-space: pre; }
+        .error { color: red; margin: 20px 0; }
+    </style>
+</head>
+<body>
+<h1>🚀 Generated Test Cases (JSON Format)</h1>
+
+<!-- Display Error -->
+<div th:if="${error}" class="error" th:text="${error}"></div>
+
+<!-- Display full JSON -->
+<div th:if="${jsonOutput != null}">
+    <pre th:text="${jsonOutput}"></pre>
+</div>
+
+</body>
+</html>

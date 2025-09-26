@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Scenario/Test Case Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 24px;
+        }
+        h2 {
+            margin-bottom: 10px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        form {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0 12px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .note {
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+<h1>🚀 Test Case Generator</h1>
+<p>Select one of the options below:</p>
+
+<div class="container">
+
+    <!-- ✅ Swagger + LLM form -->
+    <form th:action="@{/generate/scenario}" method="post">
+        <h2>Generate from Swagger</h2>
+        <label for="swaggerUrl">Swagger URL:</label>
+        <input type="text" id="swaggerUrl" name="swaggerUrl" placeholder="http://localhost:8080/v3/api-docs" required>
+
+        <label for="applicationUrl">Application Base URL:</label>
+        <input type="text" id="applicationUrl" name="applicationUrl" placeholder="http://localhost:8095/" required>
+
+        <button type="submit">Generate from Swagger</button>
+    </form>
+
+    <!-- ✅ Document Upload form -->
+    <form th:action="@{/generate/upload}" method="post" enctype="multipart/form-data">
+        <h2>Generate from Document</h2>
+        <label for="file">Upload Requirement Document (.csv, .xlsx, .xls, .docx, .doc):</label>
+        <p class="note">You can select your requirement document from any folder (Downloads, Desktop, etc.).</p>
+        <input type="file" id="file" name="file" accept=".csv,.xlsx,.xls,.docx,.doc" required>
+
+        <button type="submit">Generate from Document</button>
+    </form>
+
+</div>
+</body>
+</html>

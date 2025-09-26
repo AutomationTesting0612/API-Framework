@@ -1,49 +1,80 @@
 package com.api.framework.testing.controller;
 
-import com.api.framework.testing.model.ScenarioMain;
-import com.api.framework.testing.swagger.ScenarioGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.web.bind.annotation.*;
 
+import com.api.framework.testing.swagger.ScenarioGenerator;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
-@RestController
+@Controller
+@RequestMapping("/generate")
+@Tag(name = "Scenario Generator", description = "Generate test cases from Swagger + Application URL")
 public class APIControllerClass {
 
-    private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ScenarioGenerator scenarioGenerator;
 
-    public APIControllerClass(KafkaTemplate<String, String> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
+    public APIControllerClass(ScenarioGenerator scenarioGenerator) {
+        this.scenarioGenerator = scenarioGenerator;
     }
 
-    @Autowired
-    private ScenarioGenerator scenarioGenerator;
+    // ---------- ✅ Thymeleaf UI ----------
+    @GetMapping("/form")
+    @Operation(summary = "Load input form", description = "Thymeleaf page to enter Swagger URL and Application URL")
+    public String showForm() {
+        return "generate-form";
+    }
 
-    @PostMapping("create/api")
-    public ResponseEntity<String> save(@RequestBody ScenarioMain uiModel) {
+
+   // Using Swagger with LLM
+    @PostMapping("/scenario")
+    @Operation(summary = "Generate scenarios (UI)", description = "Submit via Thymeleaf form and see result page")
+    public String generateScenario(@RequestParam String swaggerUrl,
+                                   @RequestParam String applicationUrl,
+                                   Model model) {
         try {
-            String message = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(uiModel);
+            Map<String, Object> scenarios = scenarioGenerator.generateFromSwaggerLLM(swaggerUrl, applicationUrl);
+            model.addAttribute("swaggerUrl", swaggerUrl);
+            model.addAttribute("applicationUrl", applicationUrl);
+            model.addAttribute("scenarios", scenarios);
+        } catch (Exception e) {
+            model.addAttribute("error", "❌ Error generating scenarios: " + e.getMessage());
+        }
+        return "result";
+    }
 
-            kafkaTemplate.send("qa-source-topic", message);
+    // ---------- ✅ Using LLM ----------
+    @PostMapping("/upload")
+    public String handleUpload(@RequestParam("file") MultipartFile file, Model model) {
+        try {
+            Map<String, Object> cases = scenarioGenerator.generateFromDocumentFile(file);
 
-            System.out.println("Message sent: " + message);
-            return ResponseEntity.ok(message);
+            // Ensure "data_list" exists
+            List<Map<String, Object>> dataList = (List<Map<String, Object>>) cases.get("data_list");
+            if (dataList == null) {
+                dataList = new ArrayList<>();
+                cases.put("data_list", dataList);
+            }
+
+            // Convert the full map to JSON string
+            ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+            String jsonOutput = mapper.writeValueAsString(cases);
+
+            model.addAttribute("jsonOutput", jsonOutput);
 
         } catch (Exception e) {
-            return ResponseEntity.status(500).body("Automation failed: " + e.getMessage());
+            model.addAttribute("error", "❌ Failed: " + e.getMessage());
         }
+
+        return "result";
     }
-
-    @GetMapping("/generate/scenario")
-    public Map<String, Object> generateTestCasesFromSwagger(@PathVariable String swaggerUrl, @PathVariable String applicationUrl) throws Exception {
-        return scenarioGenerator.generate(swaggerUrl,applicationUrl);
-    }
-
-
-
-
 }
