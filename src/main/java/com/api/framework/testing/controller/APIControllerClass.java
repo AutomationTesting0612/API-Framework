@@ -70,12 +70,16 @@ public class APIControllerClass {
     @Operation(summary = "Generate scenarios (UI)", description = "Submit via Thymeleaf form and see result page")
     public String generateScenario(@RequestParam String swaggerUrl,
                                    @RequestParam String applicationUrl,
-                                   Model model) {
+                                   Model model, HttpSession session) {
         try {
             Map<String, Object> scenarios = scenarioGenerator.generateFromSwaggerLLM(swaggerUrl, applicationUrl);
+            ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+            String jsonOutput = mapper.writeValueAsString(scenarios);
+
             model.addAttribute("swaggerUrl", swaggerUrl);
             model.addAttribute("applicationUrl", applicationUrl);
-            model.addAttribute("scenarios", scenarios);
+            session.setAttribute("lastGeneratedJson", jsonOutput);
+            model.addAttribute("jsonOutput", jsonOutput);
         } catch (Exception e) {
             model.addAttribute("error", "❌ Error generating scenarios: " + e.getMessage());
         }
